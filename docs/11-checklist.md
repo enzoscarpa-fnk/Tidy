@@ -65,7 +65,7 @@
   Installer `vitest`, `@vitest/coverage-v8`, `supertest`. Créer `vitest.config.ts`. Écrire un premier test `GET /health` → 200 `{ status: 'ok' }`. Ajouter scripts `test`, `test:coverage` dans `package.json`.
   **Ref :** `03-technical-design-document.md §1`
 
-- [ ] **Ticket 1.7 — CI GitHub Actions basique**
+- [x] **Ticket 1.7 — CI GitHub Actions basique**
   Créer `.github/workflows/ci.yml` : checkout → Node 20 → `pnpm install` → `prisma generate` → `vitest run`. Déclencher sur `push` et `pull_request` sur `main`.
   **Ref :** `03-technical-design-document.md §1`
 
