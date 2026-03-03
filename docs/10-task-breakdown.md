@@ -41,31 +41,31 @@
 
 > **Objectif** : avoir un backend Fastify qui démarre, se connecte à PostgreSQL via Prisma, et passe les tests de santé.
 
-- [ ] **Ticket 1.1 — Init monorepo et structure dossiers**
+- [x] **Ticket 1.1 — Init monorepo et structure dossiers**
   Créer la structure `/backend` + `/mobile`. Initialiser `pnpm workspaces` (ou npm workspaces). Ajouter `.gitignore`, `.editorconfig`, `.nvmrc` (Node 20 LTS).
   **Ref :** `03-technical-design-document.md §1`
 
-- [ ] **Ticket 1.2 — Bootstrap Fastify + TypeScript**
+- [x] **Ticket 1.2 — Bootstrap Fastify + TypeScript**
   Init `package.json` dans `/backend`. Installer `fastify`, `typescript`, `ts-node`, `@types/node`. Créer `src/app.ts` avec `buildApp()`, `src/server.ts` avec le listen. Configurer `tsconfig.json` (strict mode).
   **Ref :** `03-technical-design-document.md §1.1` · `09-database-persistence-blueprint.md §3`
 
-- [ ] **Ticket 1.3 — Docker Compose dev (PostgreSQL + app)**
+- [x] **Ticket 1.3 — Docker Compose dev (PostgreSQL + app)**
   Créer `docker-compose.yml` avec service `postgres` (image `postgres:16`, port `5432`, credentials via env). Ajouter script `npm run dev:db` dans `package.json`. Créer `.env.example` avec `DATABASE_URL`, `JWT_SECRET`, `PORT`.
   **Ref :** `03-technical-design-document.md §1`
 
-- [ ] **Ticket 1.4 — Setup Prisma et connexion DB**
+- [x] **Ticket 1.4 — Setup Prisma et connexion DB**
   Installer `prisma` + `@prisma/client`. Créer `prisma/schema.prisma` avec `datasource db` PostgreSQL et `generator client`. Tester la connexion avec `prisma db pull` (DB vide). Créer le plugin Fastify `src/infra/database/prisma.plugin.ts` avec `fp()`, `$connect`, hook `onClose`.
   **Ref :** `09-database-persistence-blueprint.md §3`
 
-- [ ] **Ticket 1.5 — Error Handler global + Response format**
+- [x] **Ticket 1.5 — Error Handler global + Response format**
   Créer `src/shared/error-handler.plugin.ts`. Enregistrer un `setErrorHandler` Fastify qui formate toutes les erreurs selon la structure `{ data: null, meta: {}, error: { code, message, details } }`. Créer les helpers `createSuccessResponse()` et `createErrorResponse()`.
   **Ref :** `07-api-contract.md §2`
 
-- [ ] **Ticket 1.6 — Setup Vitest + premier test de santé**
+- [x] **Ticket 1.6 — Setup Vitest + premier test de santé**
   Installer `vitest`, `@vitest/coverage-v8`, `supertest`. Créer `vitest.config.ts`. Écrire un premier test `GET /health` → 200 `{ status: 'ok' }`. Ajouter scripts `test`, `test:coverage` dans `package.json`.
   **Ref :** `03-technical-design-document.md §1`
 
-- [ ] **Ticket 1.7 — CI GitHub Actions basique**
+- [x] **Ticket 1.7 — CI GitHub Actions basique**
   Créer `.github/workflows/ci.yml` : checkout → Node 20 → `pnpm install` → `prisma generate` → `vitest run`. Déclencher sur `push` et `pull_request` sur `main`.
   **Ref :** `03-technical-design-document.md §1`
 

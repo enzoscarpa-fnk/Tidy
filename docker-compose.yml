@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tidy_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tidy
+      POSTGRES_PASSWORD: tidy_dev_password
+      POSTGRES_DB: tidy_db
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: "pg_isready -U tidy -d tidy_db"
+      interval: 5s
+      timeout: 5s
+      retries: 5

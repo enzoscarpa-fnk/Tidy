@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum UserTier {
+  FREE
+  PRO
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum ProcessingStatus {
+  PENDING_UPLOAD
+  UPLOADED
+  PROCESSING
+  PARTIALLY_ENRICHED
+  ENRICHED
+  CLASSIFIED_ONLY
+  READY
+  FAILED
+  PENDING_RETRY
+  ARCHIVED
+}
+
+enum TextExtractionMethod {
+  NATIVE_PDF
+  OCR
+  NONE
+}
+
+enum DetectedType {
+  INVOICE
+  CONTRACT
+  RECEIPT
+  ID_DOCUMENT
+  BANK_STATEMENT
+  OTHER
+}
+
+// ── MODEL : User ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String     @unique
+  passwordHash String
+  displayName  String     @db.VarChar(100)
+  tier         UserTier   @default(FREE)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  updatedAt    DateTime   @updatedAt @db.Timestamptz
+
+  workspaces    Workspace[]
+  documents     Document[]     @relation("UploadedBy")
+  shareLinks    ShareLink[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+// ── MODEL : RefreshToken ─────────────────────────────────────────────────────
+
+model RefreshToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime  @db.Timestamptz
+  revokedAt DateTime? @db.Timestamptz
+  createdAt DateTime  @default(now()) @db.Timestamptz
+
+  @@index([userId])
+  @@index([tokenHash])
+  @@map("refresh_tokens")
+}
+
+// ── MODEL : Workspace ────────────────────────────────────────────────────────
+
+model Workspace {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId     String   @db.Uuid
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+  updatedAt   DateTime @updatedAt @db.Timestamptz
+
+  documents Document[]
+
+  @@unique([ownerId, name])
+  @@index([ownerId, isArchived])
+  @@map("workspaces")
+}
+
+// ── MODEL : Document (Aggregate Root) ────────────────────────────────────────
+// ⚠ updatedAt = horloge CLIENTE (LWW) — PAS @updatedAt
+
+model Document {
+  id           String    @id @db.Uuid
+  workspaceId  String    @db.Uuid
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  uploadedById String    @db.Uuid
+  uploadedBy   User      @relation("UploadedBy", fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  originalFilename String
+  mimeType         String
+  fileSizeBytes    BigInt
+  pageCount        Int?
+  s3Key            String?
+  thumbnailRef     String?
+
+  processingStatus     ProcessingStatus      @default(PENDING_UPLOAD)
+  textExtractionMethod TextExtractionMethod?
+  isDeleted            Boolean               @default(false)
+
+  extractedText String? @db.Text
+
+  title    String
+  metadata Json   @db.JsonB
+
+  detectedType DetectedType?
+  intelligence Json?         @db.JsonB
+
+  uploadedAt DateTime @db.Timestamptz
+  updatedAt  DateTime @db.Timestamptz
+  syncedAt   DateTime @default(now()) @db.Timestamptz
+
+  processingEvents ProcessingEvent[]
+  shareLinks       ShareLink[]
+
+  @@index([workspaceId, processingStatus])
+  @@index([workspaceId, detectedType])
+  @@index([workspaceId, uploadedAt(sort: Desc)])
+  @@index([workspaceId, updatedAt(sort: Desc)])
+  @@index([isDeleted, processingStatus])
+  @@map("documents")
+}
+
+// ── MODEL : ProcessingEvent ───────────────────────────────────────────────────
+
+model ProcessingEvent {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId   String   @db.Uuid
+  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  eventType    String
+  occurredAt   DateTime @db.Timestamptz
+  payload      Json?    @db.JsonB
+  isSuccess    Boolean
+  errorMessage String?
+
+  @@index([documentId, occurredAt(sort: Asc)])
+  @@map("processing_events")
+}
+
+// ── MODEL : ShareLink ────────────────────────────────────────────────────────
+
+model ShareLink {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId  String   @db.Uuid
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  expiresAt   DateTime @db.Timestamptz
+  isRevoked   Boolean  @default(false)
+  accessCount Int      @default(0)
+  createdAt   DateTime @default(now()) @db.Timestamptz
+
+  @@index([token])
+  @@index([documentId])
+  @@map("share_links")
+}

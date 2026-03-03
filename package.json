@@ -1,14 +1,14 @@
 {
-  "name": "TIdy",
+  "name": "tidy",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
   "scripts": {
-    "build": "tsc"
-  },
-  "dependencies": {},
-  "devDependencies": {
-    "typescript": "^5.5.3"
-  },
-  "private": true
+    "dev:backend": "pnpm --filter @tidy/backend dev",
+    "build:backend": "pnpm --filter @tidy/backend build"
+  }
 }
