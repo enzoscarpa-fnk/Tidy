@@ -57,11 +57,11 @@
   Installer `prisma` + `@prisma/client`. Créer `prisma/schema.prisma` avec `datasource db` PostgreSQL et `generator client`. Tester la connexion avec `prisma db pull` (DB vide). Créer le plugin Fastify `src/infra/database/prisma.plugin.ts` avec `fp()`, `$connect`, hook `onClose`.
   **Ref :** `09-database-persistence-blueprint.md §3`
 
-- [ ] **Ticket 1.5 — Error Handler global + Response format**
+- [x] **Ticket 1.5 — Error Handler global + Response format**
   Créer `src/shared/error-handler.plugin.ts`. Enregistrer un `setErrorHandler` Fastify qui formate toutes les erreurs selon la structure `{ data: null, meta: {}, error: { code, message, details } }`. Créer les helpers `createSuccessResponse()` et `createErrorResponse()`.
   **Ref :** `07-api-contract.md §2`
 
-- [ ] **Ticket 1.6 — Setup Vitest + premier test de santé**
+- [x] **Ticket 1.6 — Setup Vitest + premier test de santé**
   Installer `vitest`, `@vitest/coverage-v8`, `supertest`. Créer `vitest.config.ts`. Écrire un premier test `GET /health` → 200 `{ status: 'ok' }`. Ajouter scripts `test`, `test:coverage` dans `package.json`.
   **Ref :** `03-technical-design-document.md §1`
 

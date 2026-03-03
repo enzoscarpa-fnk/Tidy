@@ -6,6 +6,8 @@ import Fastify, {
 } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
 import prismaPlugin from './infra/database/prisma.plugin';
+import errorHandlerPlugin from './shared/plugins/error-handler.plugin';
+import { createSuccessResponse } from './shared/response.helpers';
 
 type TidyApp = FastifyInstance<
   RawServerDefault,
@@ -44,35 +46,19 @@ export async function buildApp(): Promise<TidyApp> {
     },
   }) as TidyApp;
 
-  // ── Plugins infrastructure ───────────────────────────────────────────────
+  // ── Plugins infrastructure (ordre important) ─────────────────────────────
+  await app.register(errorHandlerPlugin);
   await app.register(prismaPlugin);
 
   // ── Health check ─────────────────────────────────────────────────────────
-  app.get(
-    '/health',
-    {
-      schema: {
-        response: {
-          200: {
-            type: 'object',
-            properties: {
-              status: { type: 'string' },
-              timestamp: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
-    async (_request, _reply) => {
-      return {
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-      };
-    },
-  );
+  app.get('/health', async (_request, _reply) => {
+    return createSuccessResponse({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+    });
+  });
 
-  // ── Plugins et routes enregistrés au fil des tickets ────────────────────
-  // Ticket 1.5 : await app.register(errorHandlerPlugin)
+  // ── Routes enregistrées au fil des tickets ───────────────────────────────
   // Ticket 2.x : await app.register(authRoutes, { prefix: '/api/v1/auth' })
 
   return app;
