@@ -9,6 +9,7 @@ import prismaPlugin from './infra/database/prisma.plugin';
 import errorHandlerPlugin from './shared/plugins/error-handler.plugin';
 import authRoutes from './modules/auth/interfaces/http/auth.routes';
 import meRoutes from './modules/user/interfaces/http/me.routes';
+import workspaceRoutes     from './modules/workspace/interfaces/http/workspace.routes';
 import { createSuccessResponse } from './shared/response.helpers';
 
 type TidyApp = FastifyInstance<
@@ -63,6 +64,7 @@ export async function buildApp(): Promise<TidyApp> {
   // ── Routes enregistrées au fil des tickets ───────────────────────────────
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(meRoutes,   { prefix: '/api/v1' });
+  await app.register(workspaceRoutes, { prefix: '/api/v1/workspaces' });
 
   return app;
 }
