@@ -1,7 +1,18 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import supertest from 'supertest';
-import { buildApp } from './app';
 import type { FastifyInstance } from 'fastify';
+
+// ── Mock Prisma AVANT buildApp — vi.mock est hoisted automatiquement ──────────
+vi.mock('@prisma/client', () => {
+  const PrismaClient = vi.fn().mockImplementation(() => ({
+    $connect:    vi.fn().mockResolvedValue(undefined),
+    $disconnect: vi.fn().mockResolvedValue(undefined),
+  }));
+  return { PrismaClient };
+});
+
+// ── Import APRÈS le mock ──────────────────────────────────────────────────────
+import { buildApp } from './app';
 
 describe('GET /health', () => {
   let app: FastifyInstance;
@@ -12,10 +23,10 @@ describe('GET /health', () => {
   });
 
   afterAll(async () => {
-    await app.close();
+    await app?.close();
   });
 
-  it('retourne 200 avec {  { status: ok }, error: null }', async () => {
+  it('retourne 200 avec { status: ok }, error: null', async () => {
     const response = await supertest(app.server)
       .get('/health')
       .expect(200);

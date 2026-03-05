@@ -77,39 +77,39 @@
 
 > **Objectif** : register, login, refresh token opérationnels avec JWT. Middleware d'auth appliqué.
 
-- [ ] **Ticket 2.1 — Schéma Prisma : User + RefreshToken**
+- [x] **Ticket 2.1 — Schéma Prisma : User + RefreshToken**
   Ajouter les modèles `User` et `RefreshToken` dans `schema.prisma` (enums `UserTier`, `UserStatus` inclus). Générer la première migration : `prisma migrate dev --name init_user_auth`. Vérifier que la migration SQL est correcte.
   **Ref :** `09-database-persistence-blueprint.md §1`
 
-- [ ] **Ticket 2.2 — UserRepositoryAdapter**
+- [x] **Ticket 2.2 — UserRepositoryAdapter**
   Créer `src/infra/database/repositories/user.repository.adapter.ts`. Implémenter : `findByEmail(email)`, `findById(id)`, `create(data)`, `updateTier(id, tier)`. Créer le port `src/modules/user/domain/ports/user.repository.port.ts`.
   **Ref :** `09-database-persistence-blueprint.md §2` · `05-module-blueprint.md §1.1`
 
-- [ ] **Ticket 2.3 — RefreshTokenRepositoryAdapter**
+- [x] **Ticket 2.3 — RefreshTokenRepositoryAdapter**
   Créer `src/infra/database/repositories/refresh-token.repository.adapter.ts`. Implémenter : `create(userId, tokenHash, expiresAt)`, `findByHash(hash)`, `revoke(id)`, `revokeAllForUser(userId)`.
   **Ref :** `09-database-persistence-blueprint.md §1` · `07-api-contract.md §3 Module Auth`
 
-- [ ] **Ticket 2.4 — Service Auth : hash + JWT helpers**
+- [x] **Ticket 2.4 — Service Auth : hash + JWT helpers**
   Créer `src/modules/auth/application/auth.service.ts`. Implémenter : `hashPassword(plain)` (bcrypt, rounds=12), `verifyPassword(plain, hash)`, `generateAccessToken(userId, tier)` (JWT HS256, 1h), `generateRefreshToken()` (randomBytes(32).toString('hex')), `hashToken(token)` (SHA-256).
   **Ref :** `07-api-contract.md §1 Authentification` · `03-technical-design-document.md §9`
 
-- [ ] **Ticket 2.5 — Route POST /api/v1/auth/register**
+- [x] **Ticket 2.5 — Route POST /api/v1/auth/register**
   Créer `src/modules/auth/interfaces/http/auth.routes.ts`. Implémenter `POST /register` : validation JSON Schema (email, password ≥ 8, displayName), `hashPassword`, create User, create Workspace "Mon espace", generate tokens, return 201.
   **Ref :** `07-api-contract.md §3 POST /auth/register` · `04-domain-blueprint.md §1.1`
 
-- [ ] **Ticket 2.6 — Route POST /api/v1/auth/login**
+- [x] **Ticket 2.6 — Route POST /api/v1/auth/login**
   Implémenter `POST /login` dans `auth.routes.ts` : lookup user par email (même réponse si email inconnu ou mdp faux), bcrypt compare, generate tokens, store refreshToken hash, return 200.
   **Ref :** `07-api-contract.md §3 POST /auth/login`
 
-- [ ] **Ticket 2.7 — Route POST /api/v1/auth/refresh (rotation)**
+- [x] **Ticket 2.7 — Route POST /api/v1/auth/refresh (rotation)**
   Implémenter `POST /refresh` : hash le token reçu, lookup en DB, vérifier non révoqué + non expiré, révoquer l'ancien, générer une nouvelle paire, return 200. Si token révoqué re-soumis → révoquer TOUS les tokens du user.
   **Ref :** `07-api-contract.md §3 POST /auth/refresh`
 
-- [ ] **Ticket 2.8 — Middleware JWT `authenticate`**
+- [x] **Ticket 2.8 — Middleware JWT `authenticate`**
   Créer `src/shared/plugins/authenticate.hook.ts`. Hook `onRequest` Fastify : extraire `Authorization: Bearer <token>`, vérifier signature HS256, vérifier expiration, injecter `request.user = { sub, tier }`. Retourner 401 avec le bon code d'erreur si invalide.
   **Ref :** `07-api-contract.md §1 Authentification`
 
-- [ ] **Ticket 2.9 — Routes GET + PATCH /api/v1/me**
+- [x] **Ticket 2.9 — Routes GET + PATCH /api/v1/me**
   Créer `src/modules/user/interfaces/http/user.routes.ts`. `GET /me` : lookup user par `request.user.sub`, return profil. `PATCH /me` : valider `displayName`, update, return profil mis à jour. Appliquer le hook `authenticate`.
   **Ref :** `07-api-contract.md §3 Module Me`
 
