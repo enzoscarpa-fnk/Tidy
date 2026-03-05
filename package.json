@@ -10,5 +10,9 @@
   "scripts": {
     "dev:backend": "pnpm --filter @tidy/backend dev",
     "build:backend": "pnpm --filter @tidy/backend build"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.1.9",
+    "vitest": "^2.1.9"
   }
 }
