@@ -121,19 +121,19 @@
 
 > **Objectif** : CRUD Workspace complet avec enforcement des invariants (nom unique, archivage, 1 workspace minimum).
 
-- [ ] **Ticket 3.1 — Schéma Prisma : Workspace**
+- [x] **Ticket 3.1 — Schéma Prisma : Workspace**
   Ajouter le modèle `Workspace` dans `schema.prisma` (avec `@@unique([ownerId, name])`, `@@index([ownerId, isArchived])`). Générer la migration `add_workspace`.
   **Ref :** `09-database-persistence-blueprint.md §1`
 
-- [ ] **Ticket 3.2 — WorkspaceRepositoryAdapter**
+- [x] **Ticket 3.2 — WorkspaceRepositoryAdapter**
   Créer `src/infra/database/repositories/workspace.repository.adapter.ts`. Implémenter : `create(data)`, `findById(id)`, `findAllByUser(userId, includeArchived)`, `update(id, data)`, `delete(id)`, `countActiveByUser(userId)`, `countDocuments(workspaceId)`.
   **Ref :** `09-database-persistence-blueprint.md §2` · `05-module-blueprint.md §1.2`
 
-- [ ] **Ticket 3.3 — Routes POST + GET /api/v1/workspaces**
+- [x] **Ticket 3.3 — Routes POST + GET /api/v1/workspaces**
   Créer `src/modules/workspace/interfaces/http/workspace.routes.ts`. `POST /workspaces` : valider name/description, vérifier unicité, create, return 201. `GET /workspaces` : liste paginée des workspaces du user avec `documentCount`.
   **Ref :** `07-api-contract.md §3 Module Workspaces`
 
-- [ ] **Ticket 3.4 — Routes GET + PATCH + DELETE /api/v1/workspaces/:id**
+- [x] **Ticket 3.4 — Routes GET + PATCH + DELETE /api/v1/workspaces/:id**
   `GET /:id` : ownership check → return détail. `PATCH /:id` : ownership + invariants (archived block sauf désarchivage, name uniqueness). `DELETE /:id` : ownership + guard "dernier workspace actif" → soft delete cascade.
   **Ref :** `07-api-contract.md §3 PATCH/DELETE /workspaces/:id` · `04-domain-blueprint.md §1.2`
 
@@ -595,7 +595,7 @@ Phase 1 ──► Phase 2 ──► Phase 3 ──► Phase 4 ──► Phase 5
 - [ ] Aucun `any` TypeScript dans le codebase (frontend + backend)
 - [ ] Couverture tests backend ≥ 70% sur les modules Auth, Document, Sync, Share
 - [ ] La CI GitHub Actions passe sur `main`
-- [ ] Le chiffrement local est vérifié (fichier SQLite inlisible hors app)
+- [ ] Le chiffrement local est vérifié (fichier SQLite illisible hors app)
 - [ ] Aucune donnée utilisateur (email, OCR text) dans les logs Sentry
 - [ ] La clé Mistral API n'est pas dans le bundle mobile (vérifiable via `strings` sur l'IPA/APK)
 - [ ] Build iOS et Android testés sur device physique
