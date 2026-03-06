@@ -5,11 +5,15 @@ import Fastify, {
   FastifyTypeProviderDefault,
 } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
+import fastifyMultipart    from '@fastify/multipart';
 import prismaPlugin from './infra/database/prisma.plugin';
 import errorHandlerPlugin from './shared/plugins/error-handler.plugin';
+import eventBusPlugin      from './shared/plugins/event-bus.plugin';
+import pipelinePlugin      from './shared/plugins/pipeline.plugin';
 import authRoutes from './modules/auth/interfaces/http/auth.routes';
 import meRoutes from './modules/user/interfaces/http/me.routes';
 import workspaceRoutes     from './modules/workspace/interfaces/http/workspace.routes';
+import documentRoutes      from './modules/document/interfaces/http/document.routes';
 import { createSuccessResponse } from './shared/response.helpers';
 
 type TidyApp = FastifyInstance<
@@ -52,6 +56,17 @@ export async function buildApp(): Promise<TidyApp> {
   // ── Plugins infrastructure (ordre important) ─────────────────────────────
   await app.register(errorHandlerPlugin);
   await app.register(prismaPlugin);
+  await app.register(eventBusPlugin);
+  await app.register(pipelinePlugin);
+
+  // ── Multipart (upload) ─────────────────────────────────────────────────────
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50 Mo
+      files:    1,
+      fields:   10,
+    },
+  });
 
   // ── Health check ─────────────────────────────────────────────────────────
   app.get('/health', async (_request, _reply) => {
@@ -65,6 +80,7 @@ export async function buildApp(): Promise<TidyApp> {
   await app.register(authRoutes, { prefix: '/api/v1/auth' });
   await app.register(meRoutes,   { prefix: '/api/v1' });
   await app.register(workspaceRoutes, { prefix: '/api/v1/workspaces' });
+  await app.register(documentRoutes,  { prefix: '/api/v1/documents' });
 
   return app;
 }

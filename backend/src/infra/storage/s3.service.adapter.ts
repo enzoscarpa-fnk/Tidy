@@ -55,6 +55,22 @@ export class S3ServiceAdapter implements IS3Service {
     );
   }
 
+  // ── Télécharge le fichier pour le pipeline de traitement ─────────────────────────────────
+
+  async getObject(key: string): Promise<Buffer> {
+    const response = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+    if (!response.Body) {
+      throw new Error(`S3 getObject: body vide pour la clé "${key}"`);
+    }
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
   // ── Suppression ───────────────────────────────────────────────────────────
 
   async deleteObject(key: string): Promise<void> {

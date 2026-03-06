@@ -2,16 +2,21 @@ import type { Document, ProcessingStatus, TextExtractionMethod } from '../docume
 import type { DocumentMetadata } from '../document-metadata.value-object';
 import type { DocumentIntelligence, DetectedType } from '../document-intelligence.value-object';
 
+// ── Create ────────────────────────────────────────────────────────────────────
+
 export interface CreateDocumentData {
-  id:               string;   // UUID généré côté client
+  id:               string;
   workspaceId:      string;
   uploadedById:     string;
   originalFilename: string;
   mimeType:         string;
   fileSizeBytes:    number;
   title?:           string | null;
-  uploadedAt:       Date;
+  s3Key:            string;
+  uploadedAt?:      Date;
 }
+
+// ── Update ────────────────────────────────────────────────────────────────────
 
 export interface UpdateDocumentData {
   metadata?:             DocumentMetadata;
@@ -24,9 +29,13 @@ export interface UpdateDocumentData {
   updatedAt?:            Date;
 }
 
+// ── Filters & Pagination ──────────────────────────────────────────────────────
+
 export interface DocumentFilters {
+  query?:            string;
   processingStatus?: ProcessingStatus[];
   detectedType?:     DetectedType[];
+  userTags?:         string[];
   dateFrom?:         Date;
   dateTo?:           Date;
   sortBy?:           'uploadedAt' | 'title' | 'updatedAt';
@@ -35,13 +44,31 @@ export interface DocumentFilters {
   limit?:            number;
 }
 
+// ── ProcessingEvent ───────────────────────────────────────────────────────────
+
+export interface ProcessingEventData {
+  id:           string;
+  eventType:    string;
+  occurredAt:   Date;
+  isSuccess:    boolean;
+  errorMessage: string | null;
+}
+
+export interface DocumentWithEvents {
+  document:         Document;
+  processingEvents: ProcessingEventData[];
+}
+
+// ── Port ──────────────────────────────────────────────────────────────────────
+
 export interface IDocumentRepository {
   create(data: CreateDocumentData): Promise<Document>;
   findById(id: string): Promise<Document | null>;
+  findByIdWithEvents(id: string): Promise<DocumentWithEvents | null>;
   findAllByWorkspace(
     workspaceId: string,
     filters: DocumentFilters,
-  ): Promise<{ items: Document[]; total: number }>;
+  ): Promise<{ items: Document[]; total: number; page: number; limit: number }>;
   update(id: string, data: UpdateDocumentData): Promise<Document>;
   softDelete(id: string): Promise<void>;
   updateStatus(
@@ -49,4 +76,5 @@ export interface IDocumentRepository {
     status: ProcessingStatus,
     textExtractionMethod?: TextExtractionMethod | null,
   ): Promise<void>;
+  countActiveByUploadedById(userId: string): Promise<number>;
 }

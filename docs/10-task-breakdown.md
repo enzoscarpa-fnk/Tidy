@@ -165,23 +165,23 @@
   Créer `src/infra/ocr/mistral-ocr.adapter.ts`. Installer `node-fetch` (ou utiliser fetch natif Node 20). Implémenter `processDocument(base64, mimeType)` → appel `api.mistral.ai/v1/ocr`, parser la réponse, retourner `{ text, confidence }`. Variable d'env : `MISTRAL_API_KEY`. Gérer timeout 30s + erreur 503.
   **Ref :** `03-technical-design-document.md §5`
 
-- [ ] **Ticket 4.6 — Text Extractor Adapter (PDF natif)**
+- [x] **Ticket 4.6 — Text Extractor Adapter (PDF natif)**
   Créer `src/infra/processing/text-extractor.adapter.ts`. Installer `pdf-parse`. Implémenter `extractFromPdf(buffer)` → retourner `{ text, method: 'NATIVE_PDF' }` si le PDF contient du texte natif, sinon retourner `{ text: null, method: 'OCR_NEEDED' }`.
   **Ref :** `05-module-blueprint.md §1.4 ProcessingModule`
 
-- [ ] **Ticket 4.7 — Document Classifier Adapter (règles keywords)**
+- [x] **Ticket 4.7 — Document Classifier Adapter (règles keywords)**
   Créer `src/infra/processing/document-classifier.adapter.ts`. Implémenter `classify(text)` → règles de détection de mots-clés par type (`INVOICE` : "facture", "invoice", "montant dû" ; `CONTRACT` : "contrat", "accord" ; etc.). Retourner `{ detectedType, confidence }`.
   **Ref :** `04-domain-blueprint.md §1.3 DocumentIntelligence` · `05-module-blueprint.md §1.4`
 
-- [ ] **Ticket 4.8 — Entity Extractor Adapter**
+- [x] **Ticket 4.8 — Entity Extractor Adapter**
   Créer `src/infra/processing/entity-extractor.adapter.ts`. Implémenter `extractEntities(text)` avec des regex : montant (`\d+[.,]\d{2}\s*€`), date (formats DD/MM/YYYY etc.), IBAN, SIRET. Retourner `ExtractedEntity[]` avec `{ entityType, value, confidence }`.
   **Ref :** `04-domain-blueprint.md §1.3 ExtractedEntity`
 
-- [ ] **Ticket 4.9 — Thumbnail Generator Adapter**
+- [x] **Ticket 4.9 — Thumbnail Generator Adapter**
   Créer `src/infra/processing/thumbnail-generator.adapter.ts`. Installer `sharp`. Implémenter `generateFromImage(buffer)` → resize 200x200 JPEG, retourner buffer. Pour PDF : extraire la première page avec `pdf2pic` ou `poppler`, puis sharp.
   **Ref :** `03-technical-design-document.md §2.6`
 
-- [ ] **Ticket 4.10 — InMemoryEventBus**
+- [x] **Ticket 4.10 — InMemoryEventBus**
   Créer `src/shared/events/in-memory-event-bus.ts`. Implémenter `IEventBus` : `publish(event)` (fire-and-forget asynchrone via `setImmediate`), `subscribe(eventType, handler)`. Ne PAS await les handlers — la requête HTTP ne doit pas être bloquée.
   **Ref :** `05-module-blueprint.md §6 Simplifications MVP`
 

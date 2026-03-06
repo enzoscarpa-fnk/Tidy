@@ -2,7 +2,7 @@
   "name": "tidy",
   "private": true,
   "version": "1.0.0",
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=20.0.0",
     "pnpm": ">=9.0.0"

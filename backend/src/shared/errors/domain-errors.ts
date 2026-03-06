@@ -79,6 +79,22 @@ export class WorkspaceNameDuplicateError extends DomainError {
   }
 }
 
+// ── 413 ──────────────────────────────────────────────────────────────────────
+
+export class FileTooLargeError extends DomainError {
+  constructor() {
+    super('FILE_TOO_LARGE', 'Fichier trop volumineux. Maximum 50 Mo.');
+  }
+}
+
+// ── 415 ──────────────────────────────────────────────────────────────────────
+
+export class UnsupportedMimeTypeError extends DomainError {
+  constructor(msg = 'Type MIME non supporté. Formats acceptés : PDF, JPEG, PNG.') {
+    super('UNSUPPORTED_MIME_TYPE', msg);
+  }
+}
+
 // ── 422 ──────────────────────────────────────────────────────────────────────
 
 export class WorkspaceArchivedError extends DomainError {
@@ -90,15 +106,13 @@ export class WorkspaceArchivedError extends DomainError {
 export class InvalidStatusTransitionError extends DomainError {
   constructor(from: string, to: string) {
     super(
-      'INVALID_STATUS_TRANSITION',
-      `Transition d'état invalide : ${from} → ${to}.`,
-    );
+      'INVALID_STATUS_TRANSITION', `Transition d'état invalide : ${from} → ${to}.`,);
   }
 }
 
 export class DocumentNotReadyError extends DomainError {
-  constructor() {
-    super('DOCUMENT_NOT_READY', "Action impossible : document pas dans l'état requis.");
+  constructor(msg = "Action impossible : document pas dans l'état requis.") {
+    super('DOCUMENT_NOT_READY', msg);
   }
 }
 
@@ -112,6 +126,6 @@ export class DocumentQuotaExceededError extends DomainError {
 
 export class OcrServiceUnavailableError extends AppError {
   constructor(detail?: string) {
-    super(      'OCR_SERVICE_UNAVAILABLE', detail ?? 'Le service OCR est temporairement indisponible.');
+    super('OCR_SERVICE_UNAVAILABLE', detail ?? 'Le service OCR est temporairement indisponible.');
   }
 }
