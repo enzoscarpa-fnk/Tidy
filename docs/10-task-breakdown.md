@@ -145,23 +145,23 @@
 
 > **Objectif** : upload de document opérationnel, pipeline OCR asynchrone (InMemoryEventBus), statuts gérés.
 
-- [ ] **Ticket 4.1 — Schéma Prisma : Document, ProcessingEvent, ShareLink**
+- [x] **Ticket 4.1 — Schéma Prisma : Document, ProcessingEvent, ShareLink**
   Ajouter les 3 modèles dans `schema.prisma` (enums `ProcessingStatus`, `TextExtractionMethod`, `DetectedType`). **Attention** : `updatedAt` sur `Document` est manuel (pas `@updatedAt`). Générer migration `add_document_pipeline_share`.
   **Ref :** `09-database-persistence-blueprint.md §1`
 
-- [ ] **Ticket 4.2 — Migrations SQL raw (FTS + GIN)**
+- [x] **Ticket 4.2 — Migrations SQL raw (FTS + GIN)**
   Créer `prisma/migrations/YYYYMMDD_add_fts_gin/migration.sql` : colonne `search_vector` tsvector GENERATED STORED sur `(title || extractedText)` tokenizer `french`, index GIN `idx_documents_fts`, index GIN `idx_documents_user_tags_gin` sur `metadata->'userTags'`.
   **Ref :** `09-database-persistence-blueprint.md §6`
 
-- [ ] **Ticket 4.3 — DocumentRepositoryAdapter (base)**
+- [x] **Ticket 4.3 — DocumentRepositoryAdapter (base)**
   Créer `src/infra/database/repositories/document.repository.adapter.ts`. Implémenter : `create(data)`, `findById(id)`, `findAllByWorkspace(wId, filters, pagination)`, `update(id, data)`, `softDelete(id)`, `updateStatus(id, status)`. Mapper Prisma ↔ Domain (Value Objects `DocumentMetadata`, `DocumentIntelligence`).
   **Ref :** `09-database-persistence-blueprint.md §4`
 
-- [ ] **Ticket 4.4 — S3 Service Adapter**
+- [x] **Ticket 4.4 — S3 Service Adapter**
   Créer `src/infra/storage/s3.service.adapter.ts`. Installer `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner`. Implémenter : `putObject(key, buffer, mimeType)`, `deleteObject(key)`, `generatePresignedGetUrl(key, expiresIn)`, `generatePresignedPutUrl(key, mimeType, expiresIn)`. Variables d'env : `AWS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`.
   **Ref :** `03-technical-design-document.md §4` · `07-api-contract.md §3 POST /files/upload-url`
 
-- [ ] **Ticket 4.5 — OCR Proxy Adapter (Mistral)**
+- [x] **Ticket 4.5 — OCR Proxy Adapter (Mistral)**
   Créer `src/infra/ocr/mistral-ocr.adapter.ts`. Installer `node-fetch` (ou utiliser fetch natif Node 20). Implémenter `processDocument(base64, mimeType)` → appel `api.mistral.ai/v1/ocr`, parser la réponse, retourner `{ text, confidence }`. Variable d'env : `MISTRAL_API_KEY`. Gérer timeout 30s + erreur 503.
   **Ref :** `03-technical-design-document.md §5`
 
