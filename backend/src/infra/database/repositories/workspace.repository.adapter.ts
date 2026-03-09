@@ -1,4 +1,4 @@
-import type { PrismaClient, Workspace as PrismaWorkspace } from '@prisma/client';
+import type { PrismaClient } from '@prisma/client';
 import type {
   IWorkspaceRepository,
   CreateWorkspaceData,
@@ -6,12 +6,20 @@ import type {
 } from '../../../modules/workspace/domain/ports/workspace.repository.port';
 import type { WorkspaceEntity, WorkspaceWithDocumentCount } from '../../../modules/workspace/domain/workspace.entity';
 
+// Types dérivés depuis PrismaClient — indépendants du chemin d'output du client généré
+type PrismaWorkspaceRow = NonNullable<
+  Awaited<ReturnType<PrismaClient['workspace']['findUnique']>>
+>;
+type WorkspaceWithCount = PrismaWorkspaceRow & {
+  _count: { documents: number };
+};
+
 export class WorkspaceRepositoryAdapter implements IWorkspaceRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   // ── Mapping Prisma → Domain ────────────────────────────────────────────────
 
-  private toDomain(row: PrismaWorkspace): WorkspaceEntity {
+  private toDomain(row: PrismaWorkspaceRow): WorkspaceEntity {
     return {
       id:          row.id,
       ownerId:     row.ownerId,
@@ -47,7 +55,7 @@ export class WorkspaceRepositoryAdapter implements IWorkspaceRepository {
       orderBy: { createdAt: 'asc' },
     });
 
-    return rows.map((row) => ({
+    return rows.map((row: WorkspaceWithCount) => ({
       ...this.toDomain(row),
       documentCount: row._count.documents,
     }));
