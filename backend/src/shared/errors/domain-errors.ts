@@ -107,3 +107,11 @@ export class DocumentQuotaExceededError extends DomainError {
     super('DOCUMENT_QUOTA_EXCEEDED', 'Quota de documents atteint pour le tier Free (30 max).');
   }
 }
+
+// ── 503 ──────────────────────────────────────────────────────────────────────
+
+export class OcrServiceUnavailableError extends AppError {
+  constructor(detail?: string) {
+    super(      'OCR_SERVICE_UNAVAILABLE', detail ?? 'Le service OCR est temporairement indisponible.');
+  }
+}

@@ -145,63 +145,63 @@
 
 > **Objectif** : upload de document opérationnel, pipeline OCR asynchrone (InMemoryEventBus), statuts gérés.
 
-- [ ] **Ticket 4.1 — Schéma Prisma : Document, ProcessingEvent, ShareLink**
+- [x] **Ticket 4.1 — Schéma Prisma : Document, ProcessingEvent, ShareLink**
   Ajouter les 3 modèles dans `schema.prisma` (enums `ProcessingStatus`, `TextExtractionMethod`, `DetectedType`). **Attention** : `updatedAt` sur `Document` est manuel (pas `@updatedAt`). Générer migration `add_document_pipeline_share`.
   **Ref :** `09-database-persistence-blueprint.md §1`
 
-- [ ] **Ticket 4.2 — Migrations SQL raw (FTS + GIN)**
+- [x] **Ticket 4.2 — Migrations SQL raw (FTS + GIN)**
   Créer `prisma/migrations/YYYYMMDD_add_fts_gin/migration.sql` : colonne `search_vector` tsvector GENERATED STORED sur `(title || extractedText)` tokenizer `french`, index GIN `idx_documents_fts`, index GIN `idx_documents_user_tags_gin` sur `metadata->'userTags'`.
   **Ref :** `09-database-persistence-blueprint.md §6`
 
-- [ ] **Ticket 4.3 — DocumentRepositoryAdapter (base)**
+- [x] **Ticket 4.3 — DocumentRepositoryAdapter (base)**
   Créer `src/infra/database/repositories/document.repository.adapter.ts`. Implémenter : `create(data)`, `findById(id)`, `findAllByWorkspace(wId, filters, pagination)`, `update(id, data)`, `softDelete(id)`, `updateStatus(id, status)`. Mapper Prisma ↔ Domain (Value Objects `DocumentMetadata`, `DocumentIntelligence`).
   **Ref :** `09-database-persistence-blueprint.md §4`
 
-- [ ] **Ticket 4.4 — S3 Service Adapter**
+- [x] **Ticket 4.4 — S3 Service Adapter**
   Créer `src/infra/storage/s3.service.adapter.ts`. Installer `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner`. Implémenter : `putObject(key, buffer, mimeType)`, `deleteObject(key)`, `generatePresignedGetUrl(key, expiresIn)`, `generatePresignedPutUrl(key, mimeType, expiresIn)`. Variables d'env : `AWS_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`.
   **Ref :** `03-technical-design-document.md §4` · `07-api-contract.md §3 POST /files/upload-url`
 
-- [ ] **Ticket 4.5 — OCR Proxy Adapter (Mistral)**
+- [x] **Ticket 4.5 — OCR Proxy Adapter (Mistral)**
   Créer `src/infra/ocr/mistral-ocr.adapter.ts`. Installer `node-fetch` (ou utiliser fetch natif Node 20). Implémenter `processDocument(base64, mimeType)` → appel `api.mistral.ai/v1/ocr`, parser la réponse, retourner `{ text, confidence }`. Variable d'env : `MISTRAL_API_KEY`. Gérer timeout 30s + erreur 503.
   **Ref :** `03-technical-design-document.md §5`
 
-- [ ] **Ticket 4.6 — Text Extractor Adapter (PDF natif)**
+- [x] **Ticket 4.6 — Text Extractor Adapter (PDF natif)**
   Créer `src/infra/processing/text-extractor.adapter.ts`. Installer `pdf-parse`. Implémenter `extractFromPdf(buffer)` → retourner `{ text, method: 'NATIVE_PDF' }` si le PDF contient du texte natif, sinon retourner `{ text: null, method: 'OCR_NEEDED' }`.
   **Ref :** `05-module-blueprint.md §1.4 ProcessingModule`
 
-- [ ] **Ticket 4.7 — Document Classifier Adapter (règles keywords)**
+- [x] **Ticket 4.7 — Document Classifier Adapter (règles keywords)**
   Créer `src/infra/processing/document-classifier.adapter.ts`. Implémenter `classify(text)` → règles de détection de mots-clés par type (`INVOICE` : "facture", "invoice", "montant dû" ; `CONTRACT` : "contrat", "accord" ; etc.). Retourner `{ detectedType, confidence }`.
   **Ref :** `04-domain-blueprint.md §1.3 DocumentIntelligence` · `05-module-blueprint.md §1.4`
 
-- [ ] **Ticket 4.8 — Entity Extractor Adapter**
+- [x] **Ticket 4.8 — Entity Extractor Adapter**
   Créer `src/infra/processing/entity-extractor.adapter.ts`. Implémenter `extractEntities(text)` avec des regex : montant (`\d+[.,]\d{2}\s*€`), date (formats DD/MM/YYYY etc.), IBAN, SIRET. Retourner `ExtractedEntity[]` avec `{ entityType, value, confidence }`.
   **Ref :** `04-domain-blueprint.md §1.3 ExtractedEntity`
 
-- [ ] **Ticket 4.9 — Thumbnail Generator Adapter**
+- [x] **Ticket 4.9 — Thumbnail Generator Adapter**
   Créer `src/infra/processing/thumbnail-generator.adapter.ts`. Installer `sharp`. Implémenter `generateFromImage(buffer)` → resize 200x200 JPEG, retourner buffer. Pour PDF : extraire la première page avec `pdf2pic` ou `poppler`, puis sharp.
   **Ref :** `03-technical-design-document.md §2.6`
 
-- [ ] **Ticket 4.10 — InMemoryEventBus**
+- [x] **Ticket 4.10 — InMemoryEventBus**
   Créer `src/shared/events/in-memory-event-bus.ts`. Implémenter `IEventBus` : `publish(event)` (fire-and-forget asynchrone via `setImmediate`), `subscribe(eventType, handler)`. Ne PAS await les handlers — la requête HTTP ne doit pas être bloquée.
   **Ref :** `05-module-blueprint.md §6 Simplifications MVP`
 
-- [ ] **Ticket 4.11 — ProcessingPipelineOrchestrator**
+- [x] **Ticket 4.11 — ProcessingPipelineOrchestrator**
   Créer `src/modules/processing/application/orchestration/processing-pipeline.orchestrator.ts`. Orchestrer : TextExtractor → (si OCR needed) OcrAdapter → Classifier → EntityExtractor → ThumbnailGenerator → `updateStatus(ENRICHED)` → émettre `DocumentReady`. En cas d'échec → `updateStatus(FAILED)` + créer `ProcessingEvent` immuable.
   **Ref :** `05-module-blueprint.md §5`
 
-- [ ] **Ticket 4.12 — Handler DocumentUploaded + abonnement bus**
+- [x] **Ticket 4.12 — Handler DocumentUploaded + abonnement bus**
   Créer `src/modules/processing/application/handlers/handle-document-uploaded.handler.ts`. S'abonner à `DocumentUploaded` sur le bus. Handler : appeler `ProcessingPipelineOrchestrator`. Enregistrer l'abonnement dans `app.ts` au démarrage.
   **Ref :** `05-module-blueprint.md §5 Déclenchement`
 
-- [ ] **Ticket 4.13 — Route POST /api/v1/documents (upload multipart)**
+- [x] **Ticket 4.13 — Route POST /api/v1/documents (upload multipart)**
   Installer `@fastify/multipart`. Créer `src/modules/document/interfaces/http/document.routes.ts`. `POST /documents` : parser multipart (file + workspaceId + title optionnel), valider MIME (`pdf/jpeg/png`) + taille (≤ 50 Mo), stocker fichier en S3, créer Document en DB (status `UPLOADED`), émettre `DocumentUploaded` sur le bus, return 201 immédiat.
   **Ref :** `07-api-contract.md §3 POST /documents`
 
-- [ ] **Ticket 4.14 — Routes GET /documents, GET /documents/:id**
+- [x] **Ticket 4.14 — Routes GET /documents, GET /documents/:id**
   `GET /documents` : filtres (workspaceId, processingStatus, detectedType, query FTS, userTags), pagination, tri. `GET /documents/:id` : document complet avec `processingEvents[]` (triés `occurredAt ASC`), `downloadUrl` (presigned S3 GET 15min).
   **Ref :** `07-api-contract.md §3 GET /documents`
 
-- [ ] **Ticket 4.15 — Routes PATCH, DELETE, reprocess, archive**
+- [x] **Ticket 4.15 — Routes PATCH, DELETE, reprocess, archive**
   `PATCH /documents/:id` : modifier `DocumentMetadata` uniquement (title, userTags, notes, userOverrideType). `DELETE /:id` : soft delete. `POST /:id/reprocess` : guard FAILED → PENDING_RETRY → émettre event. `POST /:id/archive` : guard ENRICHED|CLASSIFIED_ONLY → ARCHIVED.
   **Ref :** `07-api-contract.md §3 PATCH/DELETE/reprocess/archive`
 

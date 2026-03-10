@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import type { IWorkspaceRepository, UpdateWorkspaceData } from '../domain/ports/workspace.repository.port';
 import type { WorkspaceWithDocumentCount } from '../domain/workspace.entity';
 import {
@@ -30,7 +29,12 @@ export class WorkspaceService {
       });
       return { ...workspace, documentCount: 0 };
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      if (
+        err !== null &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code: unknown }).code === 'P2002'
+      ) {
         throw new WorkspaceNameDuplicateError();
       }
       throw err;
@@ -93,7 +97,12 @@ export class WorkspaceService {
       const documentCount = await this.workspaceRepo.countDocuments(id);
       return { ...updated, documentCount };
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      if (
+        err !== null &&
+        typeof err === 'object' &&
+        'code' in err &&
+        (err as { code: unknown }).code === 'P2002'
+      ) {
         throw new WorkspaceNameDuplicateError();
       }
       throw err;

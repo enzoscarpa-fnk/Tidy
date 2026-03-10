@@ -14,5 +14,8 @@
   "devDependencies": {
     "@vitest/coverage-v8": "^2.1.9",
     "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "@fastify/multipart": "^9.4.0"
   }
 }
