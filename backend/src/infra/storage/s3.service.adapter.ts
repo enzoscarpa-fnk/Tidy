@@ -13,8 +13,6 @@ export class S3ServiceAdapter implements IS3Service {
     private readonly bucket: string,
   ) {}
 
-  // ── Factory production (lecture des env vars) ─────────────────────────────
-
   static fromEnv(): S3ServiceAdapter {
     const region          = process.env['AWS_REGION']            ?? '';
     const accessKeyId     = process.env['AWS_ACCESS_KEY_ID']     ?? '';
@@ -32,17 +30,35 @@ export class S3ServiceAdapter implements IS3Service {
     const client = new S3Client({
       region,
       credentials: { accessKeyId, secretAccessKey },
-      // Endpoint custom pour LocalStack / MinIO en développement local
       ...(endpointUrl && {
-        endpoint:         endpointUrl,
-        forcePathStyle:   true, // MinIO exige le path-style
+        endpoint:       endpointUrl,
+        forcePathStyle: true,
       }),
     });
 
     return new S3ServiceAdapter(client, bucket);
   }
 
-  // ── Upload direct (pipeline côté serveur) ─────────────────────────────────
+  // ── Téléchargement (pipeline côté serveur) ────────────────────────────────
+
+  async getObject(key: string): Promise<Buffer> {
+    const response = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+
+    if (!response.Body) {
+      throw new Error(`S3: objet "${key}" introuvable ou corps vide.`);
+    }
+
+    // AWS SDK v3 : Body est un AsyncIterable<Uint8Array> côté Node.js
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of response.Body as AsyncIterable<Uint8Array>) {
+      chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
+  }
+
+  // ── Upload direct ─────────────────────────────────────────────────────────
 
   async putObject(key: string, buffer: Buffer, mimeType: string): Promise<void> {
     await this.client.send(
@@ -59,14 +75,11 @@ export class S3ServiceAdapter implements IS3Service {
 
   async deleteObject(key: string): Promise<void> {
     await this.client.send(
-      new DeleteObjectCommand({
-        Bucket: this.bucket,
-        Key:    key,
-      }),
+      new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
     );
   }
 
-  // ── Presigned GET (téléchargement sécurisé, 15 min par défaut) ────────────
+  // ── Presigned GET ─────────────────────────────────────────────────────────
 
   async generatePresignedGetUrl(key: string, expiresIn: number): Promise<string> {
     return getSignedUrl(
@@ -76,10 +89,10 @@ export class S3ServiceAdapter implements IS3Service {
     );
   }
 
-  // ── Presigned PUT (upload mobile direct vers S3, 10 min par défaut) ───────
+  // ── Presigned PUT ─────────────────────────────────────────────────────────
 
   async generatePresignedPutUrl(
-    key: string,
+    key:      string,
     mimeType: string,
     expiresIn: number,
   ): Promise<string> {

@@ -2,9 +2,9 @@ import {
   Prisma,
   type PrismaClient,
   type Document as PrismaDocument,
-  ProcessingStatus   as PrismaProcessingStatus,
+  ProcessingStatus     as PrismaProcessingStatus,
   TextExtractionMethod as PrismaTextExtractionMethod,
-  DetectedType       as PrismaDetectedType,
+  DetectedType         as PrismaDetectedType,
 } from '@prisma/client';
 import type {
   IDocumentRepository,
@@ -12,9 +12,9 @@ import type {
   UpdateDocumentData,
   DocumentFilters,
 } from '../../../modules/document/domain/ports/document.repository.port';
-import { Document } from '../../../modules/document/domain/document.aggregate';
+import { Document }          from '../../../modules/document/domain/document.aggregate';
 import type { ProcessingStatus, TextExtractionMethod } from '../../../modules/document/domain/document.aggregate';
-import { DocumentMetadata } from '../../../modules/document/domain/document-metadata.value-object';
+import { DocumentMetadata }  from '../../../modules/document/domain/document-metadata.value-object';
 import type { MetadataJson } from '../../../modules/document/domain/document-metadata.value-object';
 import { DocumentIntelligence } from '../../../modules/document/domain/document-intelligence.value-object';
 import type { IntelligenceJson, DetectedType } from '../../../modules/document/domain/document-intelligence.value-object';
@@ -50,7 +50,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
       uploadedById:         row.uploadedById,
       originalFilename:     row.originalFilename,
       mimeType:             row.mimeType,
-      fileSizeBytes:        Number(row.fileSizeBytes), // BigInt → number (safe jusqu'à 9 Po)
+      fileSizeBytes:        Number(row.fileSizeBytes),
       pageCount:            row.pageCount,
       s3Key:                row.s3Key,
       thumbnailRef:         row.thumbnailRef,
@@ -84,19 +84,21 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
         metadata:         DocumentMetadata.default(title).toJSON() as Prisma.InputJsonValue,
         intelligence:     Prisma.JsonNull,
         uploadedAt:       data.uploadedAt,
-        updatedAt:        data.uploadedAt, // horloge cliente LWW
+        updatedAt:        data.uploadedAt,
       },
     });
 
     return this.toDomain(row);
   }
 
-  // ── Lecture ────────────────────────────────────────────────────────────────
+  // ── Lecture simple ─────────────────────────────────────────────────────────
 
   async findById(id: string): Promise<Document | null> {
     const row = await this.prisma.document.findUnique({ where: { id } });
     return row ? this.toDomain(row) : null;
   }
+
+  // ── Lecture liste — chemin Prisma standard ────────────────────────────────
 
   async findAllByWorkspace(
     workspaceId: string,
@@ -105,6 +107,12 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const page  = Math.max(1, filters.page  ?? 1);
     const limit = Math.min(100, Math.max(1, filters.limit ?? 30));
 
+    // Dès qu'on a FTS ou userTags → chemin raw SQL
+    if (filters.query || filters.userTags?.length) {
+      return this.findAllByWorkspaceRaw(workspaceId, filters, page, limit);
+    }
+
+    // ── Chemin Prisma standard ──────────────────────────────────────────────
     const where: Prisma.DocumentWhereInput = {
       workspaceId,
       isDeleted: false,
@@ -135,13 +143,96 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     return { items: rows.map(this.toDomain.bind(this)), total };
   }
 
+  // ── Lecture liste — chemin raw SQL (FTS + userTags) ───────────────────────
+
+  private async findAllByWorkspaceRaw(
+    workspaceId: string,
+    filters: DocumentFilters,
+    page: number,
+    limit: number,
+  ): Promise<{ items: Document[]; total: number }> {
+    const offset = (page - 1) * limit;
+
+    // Conditions de base — paramétrisées via Prisma.sql (injection impossible)
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`d."workspaceId" = ${workspaceId}`,
+      Prisma.sql`d."isDeleted"   = false`,
+    ];
+
+    // processingStatus — valeurs issues d'un union type contrôlé → Prisma.raw sûr
+    if (filters.processingStatus?.length) {
+      const vals = Prisma.raw(filters.processingStatus.map(s => `'${s}'`).join(', '));
+      conditions.push(Prisma.sql`d."processingStatus"::text = ANY(ARRAY[${vals}])`);
+    }
+
+    // detectedType — idem
+    if (filters.detectedType?.length) {
+      const vals = Prisma.raw(filters.detectedType.map(s => `'${s}'`).join(', '));
+      conditions.push(Prisma.sql`d."detectedType"::text = ANY(ARRAY[${vals}])`);
+    }
+
+    // Plage de dates
+    if (filters.dateFrom) {
+      conditions.push(Prisma.sql`d."uploadedAt" >= ${filters.dateFrom}`);
+    }
+    if (filters.dateTo) {
+      conditions.push(Prisma.sql`d."uploadedAt" <= ${filters.dateTo}`);
+    }
+
+    // FTS — searchVector @@ plainto_tsquery (index GIN)
+    if (filters.query) {
+      conditions.push(
+        Prisma.sql`d."searchVector" @@ plainto_tsquery('french', ${filters.query})`,
+      );
+    }
+
+    // userTags — opérateur @> sur JSONB (index GIN)
+    if (filters.userTags?.length) {
+      const tagsJson = JSON.stringify(filters.userTags);
+      conditions.push(
+        Prisma.sql`d.metadata->'userTags' @> ${tagsJson}::jsonb`,
+      );
+    }
+
+    const where = Prisma.join(conditions, ' AND ');
+
+    // Tri : pertinence FTS prioritaire, sinon colonne choisie
+    const sortCol = Prisma.raw(`"${filters.sortBy ?? 'uploadedAt'}"`);
+    const sortDir = Prisma.raw(filters.sortOrder === 'asc' ? 'ASC' : 'DESC');
+
+    const orderBy = filters.query
+      ? Prisma.sql`ts_rank(d."searchVector", plainto_tsquery('french', ${filters.query})) DESC`
+      : Prisma.sql`d.${sortCol} ${sortDir}`;
+
+    const [rows, countRows] = await Promise.all([
+      this.prisma.$queryRaw<PrismaDocument[]>`
+        SELECT d.*
+        FROM   "Document" d
+        WHERE  ${where}
+        ORDER  BY ${orderBy}
+        LIMIT  ${limit}
+        OFFSET ${offset}
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM   "Document" d
+        WHERE  ${where}
+      `,
+    ]);
+
+    return {
+      items: rows.map(this.toDomain.bind(this)),
+      total: Number(countRows[0]?.count ?? 0),
+    };
+  }
+
   // ── Mise à jour ────────────────────────────────────────────────────────────
 
   async update(id: string, data: UpdateDocumentData): Promise<Document> {
     const row = await this.prisma.document.update({
       where: { id },
       data: {
-        ...(data.metadata && {
+      ...(data.metadata && {
         title:    data.metadata.title,
         metadata: data.metadata.toJSON() as Prisma.InputJsonValue,
       }),
@@ -149,9 +240,9 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
         detectedType: (data.intelligence?.detectedType ?? null) as PrismaDetectedType | null,
         intelligence: (data.intelligence?.toJSON() as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
       }),
-      ...(data.s3Key               !== undefined && { s3Key:                data.s3Key }),
-      ...(data.thumbnailRef        !== undefined && { thumbnailRef:         data.thumbnailRef }),
-      ...(data.extractedText       !== undefined && { extractedText:        data.extractedText }),
+      ...(data.s3Key                !== undefined && { s3Key:                data.s3Key }),
+      ...(data.thumbnailRef         !== undefined && { thumbnailRef:         data.thumbnailRef }),
+      ...(data.extractedText        !== undefined && { extractedText:        data.extractedText }),
       ...(data.textExtractionMethod !== undefined && {
         textExtractionMethod: data.textExtractionMethod as PrismaTextExtractionMethod | null,
       }),
@@ -179,7 +270,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
       where: { id },
       data: {
         processingStatus: status as PrismaProcessingStatus,
-        ...(textExtractionMethod !== undefined && {
+      ...(textExtractionMethod !== undefined && {
         textExtractionMethod: textExtractionMethod as PrismaTextExtractionMethod | null,
       }),
         updatedAt: new Date(),

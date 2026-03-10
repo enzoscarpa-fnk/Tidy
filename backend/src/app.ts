@@ -5,11 +5,13 @@ import Fastify, {
   FastifyTypeProviderDefault,
 } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
-import prismaPlugin from './infra/database/prisma.plugin';
+import prismaPlugin       from './infra/database/prisma.plugin';
 import errorHandlerPlugin from './shared/plugins/error-handler.plugin';
-import authRoutes from './modules/auth/interfaces/http/auth.routes';
-import meRoutes from './modules/user/interfaces/http/me.routes';
-import workspaceRoutes     from './modules/workspace/interfaces/http/workspace.routes';
+import processingPlugin   from './modules/processing/processing.plugin';
+import authRoutes         from './modules/auth/interfaces/http/auth.routes';
+import meRoutes           from './modules/user/interfaces/http/me.routes';
+import workspaceRoutes    from './modules/workspace/interfaces/http/workspace.routes';
+import documentRoutes     from './modules/document/interfaces/http/document.routes';
 import { createSuccessResponse } from './shared/response.helpers';
 
 type TidyApp = FastifyInstance<
@@ -30,9 +32,9 @@ export async function buildApp(): Promise<TidyApp> {
         transport: {
           target: 'pino-pretty',
           options: {
-            colorize: true,
+            colorize:      true,
             translateTime: 'HH:MM:ss.l',
-            ignore: 'pid,hostname',
+            ignore:        'pid,hostname',
           },
         },
       }
@@ -42,29 +44,31 @@ export async function buildApp(): Promise<TidyApp> {
     ajv: {
       customOptions: {
         removeAdditional: true,
-        useDefaults: true,
-        coerceTypes: false,
-        allErrors: false,
+        useDefaults:      true,
+        coerceTypes:      false,
+        allErrors:        false,
       },
     },
   }) as TidyApp;
 
-  // ── Plugins infrastructure (ordre important) ─────────────────────────────
+  // ── Plugins infrastructure (ordre strict) ────────────────────────────────
   await app.register(errorHandlerPlugin);
   await app.register(prismaPlugin);
+  await app.register(processingPlugin); // dépend de prismaPlugin
 
   // ── Health check ─────────────────────────────────────────────────────────
   app.get('/health', async (_request, _reply) => {
     return createSuccessResponse({
-      status: 'ok',
+      status:    'ok',
       timestamp: new Date().toISOString(),
     });
   });
 
-  // ── Routes enregistrées au fil des tickets ───────────────────────────────
-  await app.register(authRoutes, { prefix: '/api/v1/auth' });
-  await app.register(meRoutes,   { prefix: '/api/v1' });
+  // ── Routes ───────────────────────────────────────────────────────────────
+  await app.register(authRoutes,      { prefix: '/api/v1/auth' });
+  await app.register(meRoutes,        { prefix: '/api/v1' });
   await app.register(workspaceRoutes, { prefix: '/api/v1/workspaces' });
+  await app.register(documentRoutes,  { prefix: '/api/v1/documents' });
 
   return app;
 }

@@ -4,7 +4,6 @@ import { AppError } from '../errors/app-error';
 import { createErrorResponse } from '../response.helpers';
 
 const errorHandlerPlugin: FastifyPluginAsync = fp(async (fastify) => {
-  // ── Erreurs dans les handlers ─────────────────────────────────────────────
   fastify.setErrorHandler((error, request, reply) => {
     if (error instanceof AppError) {
       request.log.info(
@@ -14,6 +13,12 @@ const errorHandlerPlugin: FastifyPluginAsync = fp(async (fastify) => {
       return reply
         .status(error.statusCode)
         .send(createErrorResponse(error.code, error.message, error.details));
+    }
+
+    if ((error as { code?: string }).code === 'FST_REQ_FILE_TOO_LARGE') {
+      return reply
+        .status(413)
+        .send(createErrorResponse('FILE_TOO_LARGE', 'Le fichier dépasse la limite de 50 Mo.'));
     }
 
     if (error.validation != null) {
@@ -44,7 +49,6 @@ const errorHandlerPlugin: FastifyPluginAsync = fp(async (fastify) => {
       .send(createErrorResponse('INTERNAL_ERROR', 'Une erreur interne est survenue.'));
   });
 
-  // ── Route inconnue (404) — setNotFoundHandler obligatoire ─────────────────
   fastify.setNotFoundHandler((request, reply) => {
     return reply.status(404).send(
       createErrorResponse('INTERNAL_ERROR', `Route ${request.method}:${request.url} not found`),

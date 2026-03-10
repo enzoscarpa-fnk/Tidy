@@ -17,6 +17,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1003.0",
     "@aws-sdk/s3-request-presigner": "^3.1003.0",
+    "@fastify/multipart": "8",
     "@prisma/client": "^6.5.0",
     "bcrypt": "^6.0.0",
     "fastify": "^4.28.1",

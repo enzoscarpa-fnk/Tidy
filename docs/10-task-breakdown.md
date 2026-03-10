@@ -181,27 +181,27 @@
   Créer `src/infra/processing/thumbnail-generator.adapter.ts`. Installer `sharp`. Implémenter `generateFromImage(buffer)` → resize 200x200 JPEG, retourner buffer. Pour PDF : extraire la première page avec `pdf2pic` ou `poppler`, puis sharp.
   **Ref :** `03-technical-design-document.md §2.6`
 
-- [ ] **Ticket 4.10 — InMemoryEventBus**
+- [x] **Ticket 4.10 — InMemoryEventBus**
   Créer `src/shared/events/in-memory-event-bus.ts`. Implémenter `IEventBus` : `publish(event)` (fire-and-forget asynchrone via `setImmediate`), `subscribe(eventType, handler)`. Ne PAS await les handlers — la requête HTTP ne doit pas être bloquée.
   **Ref :** `05-module-blueprint.md §6 Simplifications MVP`
 
-- [ ] **Ticket 4.11 — ProcessingPipelineOrchestrator**
+- [x] **Ticket 4.11 — ProcessingPipelineOrchestrator**
   Créer `src/modules/processing/application/orchestration/processing-pipeline.orchestrator.ts`. Orchestrer : TextExtractor → (si OCR needed) OcrAdapter → Classifier → EntityExtractor → ThumbnailGenerator → `updateStatus(ENRICHED)` → émettre `DocumentReady`. En cas d'échec → `updateStatus(FAILED)` + créer `ProcessingEvent` immuable.
   **Ref :** `05-module-blueprint.md §5`
 
-- [ ] **Ticket 4.12 — Handler DocumentUploaded + abonnement bus**
+- [x] **Ticket 4.12 — Handler DocumentUploaded + abonnement bus**
   Créer `src/modules/processing/application/handlers/handle-document-uploaded.handler.ts`. S'abonner à `DocumentUploaded` sur le bus. Handler : appeler `ProcessingPipelineOrchestrator`. Enregistrer l'abonnement dans `app.ts` au démarrage.
   **Ref :** `05-module-blueprint.md §5 Déclenchement`
 
-- [ ] **Ticket 4.13 — Route POST /api/v1/documents (upload multipart)**
+- [x] **Ticket 4.13 — Route POST /api/v1/documents (upload multipart)**
   Installer `@fastify/multipart`. Créer `src/modules/document/interfaces/http/document.routes.ts`. `POST /documents` : parser multipart (file + workspaceId + title optionnel), valider MIME (`pdf/jpeg/png`) + taille (≤ 50 Mo), stocker fichier en S3, créer Document en DB (status `UPLOADED`), émettre `DocumentUploaded` sur le bus, return 201 immédiat.
   **Ref :** `07-api-contract.md §3 POST /documents`
 
-- [ ] **Ticket 4.14 — Routes GET /documents, GET /documents/:id**
+- [x] **Ticket 4.14 — Routes GET /documents, GET /documents/:id**
   `GET /documents` : filtres (workspaceId, processingStatus, detectedType, query FTS, userTags), pagination, tri. `GET /documents/:id` : document complet avec `processingEvents[]` (triés `occurredAt ASC`), `downloadUrl` (presigned S3 GET 15min).
   **Ref :** `07-api-contract.md §3 GET /documents`
 
-- [ ] **Ticket 4.15 — Routes PATCH, DELETE, reprocess, archive**
+- [x] **Ticket 4.15 — Routes PATCH, DELETE, reprocess, archive**
   `PATCH /documents/:id` : modifier `DocumentMetadata` uniquement (title, userTags, notes, userOverrideType). `DELETE /:id` : soft delete. `POST /:id/reprocess` : guard FAILED → PENDING_RETRY → émettre event. `POST /:id/archive` : guard ENRICHED|CLASSIFIED_ONLY → ARCHIVED.
   **Ref :** `07-api-contract.md §3 PATCH/DELETE/reprocess/archive`
 

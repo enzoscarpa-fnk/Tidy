@@ -27,6 +27,8 @@ export interface UpdateDocumentData {
 export interface DocumentFilters {
   processingStatus?: ProcessingStatus[];
   detectedType?:     DetectedType[];
+  userTags?:         string[];
+  query?:            string;
   dateFrom?:         Date;
   dateTo?:           Date;
   sortBy?:           'uploadedAt' | 'title' | 'updatedAt';
