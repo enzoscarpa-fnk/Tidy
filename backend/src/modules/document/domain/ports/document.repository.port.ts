@@ -2,8 +2,10 @@ import type { Document, ProcessingStatus, TextExtractionMethod } from '../docume
 import type { DocumentMetadata } from '../document-metadata.value-object';
 import type { DocumentIntelligence, DetectedType } from '../document-intelligence.value-object';
 
+// ── Types existants ───────────────────────────────────────────────────────────
+
 export interface CreateDocumentData {
-  id:               string;   // UUID généré côté client
+  id:               string;
   workspaceId:      string;
   uploadedById:     string;
   originalFilename: string;
@@ -37,6 +39,49 @@ export interface DocumentFilters {
   limit?:            number;
 }
 
+// ── Types Sync LWW ───────────────────────────────────────────────
+
+/**
+ * Résultat de syncUpsert :
+ * - 'created'  → document inexistant, créé en base
+ * - 'updated'  → clientUpdatedAt > serverUpdatedAt, mise à jour effectuée
+ * - 'skipped'  → clientUpdatedAt ≤ serverUpdatedAt, serveur plus récent, ignoré
+ */
+export type SyncResult = 'created' | 'updated' | 'skipped';
+
+/**
+ * Payload envoyé par le client mobile pour synchroniser un document.
+ * Seuls les champs éditables côté client participent au LWW.
+ * Les champs gérés par le pipeline serveur (intelligence, extractedText,
+ * processingStatus, detectedType) ne sont jamais écrasés par la sync.
+ */
+export interface SyncUpsertPayload {
+  // Identité
+  id:               string;
+  workspaceId:      string;
+  uploadedById:     string;
+
+  // Métadonnées techniques (éditables client au sens upload)
+  originalFilename: string;
+  mimeType:         string;
+  fileSizeBytes:    number;
+  s3Key:            string | null;
+
+  // Métadonnées utilisateur (éditables client)
+  title:            string;
+  userTags:         string[];
+  notes:            string | null;
+
+  // Cycle de vie
+  isDeleted:        boolean;
+
+  // Horloges clientes (source LWW)
+  clientCreatedAt:  Date;
+  clientUpdatedAt:  Date;
+}
+
+// ── Interface du port ────────────────────────────────────────────────────────
+
 export interface IDocumentRepository {
   create(data: CreateDocumentData): Promise<Document>;
   findById(id: string): Promise<Document | null>;
@@ -51,4 +96,6 @@ export interface IDocumentRepository {
     status: ProcessingStatus,
     textExtractionMethod?: TextExtractionMethod | null,
   ): Promise<void>;
+  syncUpsert(payload: SyncUpsertPayload): Promise<SyncResult>;
+  findSince(workspaceId: string, since: Date): Promise<Document[]>;
 }

@@ -1,5 +1,3 @@
----
-
 # Module Blueprint — Gestionnaire Documentaire Intelligent (MVP)
 
 > Version : 1.1 · Architecture : Monolithe Modulaire · Base : Domain Blueprint v1.0

@@ -10,6 +10,7 @@ import { authenticate }              from '../../../../shared/plugins/authentica
 import { DocumentUploadedEvent }     from '../../domain/events/document-uploaded.event';
 import { DocumentIntelligence }      from '../../domain/document-intelligence.value-object';
 import type { DetectedType }         from '../../domain/document-intelligence.value-object';
+import type { SyncResult }           from '../../domain/ports/document.repository.port';
 import {
   createSuccessResponse,
   createPaginatedResponse,
@@ -20,6 +21,8 @@ import {
   documentIdParamSchema,
   listDocumentsQuerySchema,
   patchDocumentBodySchema,
+  syncDocumentsBatchBodySchema,
+  pullSyncQuerySchema,
 }                                    from './document.schemas';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -30,6 +33,9 @@ const DOWNLOAD_URL_TTL_SEC = 15 * 60;
 
 const REPROCESSABLE_STATUSES = new Set<ProcessingStatus>(['FAILED']);
 const ARCHIVABLE_STATUSES    = new Set<ProcessingStatus>(['ENRICHED', 'CLASSIFIED_ONLY']);
+
+/** Epoch UNIX — utilisé comme `since` par défaut (premier pull complet) */
+const EPOCH = new Date(0);
 
 // ── Types de requête ──────────────────────────────────────────────────────────
 
@@ -50,6 +56,42 @@ type PatchBody = {
   userTags?:         string[];
   notes?:            string | null;
   userOverrideType?: DetectedType;
+};
+
+// ── Types Sync push ──────────────────────────────────────────────
+
+type SyncDocumentInput = {
+  id:               string;
+  workspaceId:      string;
+  originalFilename: string;
+  mimeType:         string;
+  fileSizeBytes:    number;
+  s3Key:            string | null;
+  title:            string;
+  userTags:         string[];
+  notes:            string | null;
+  isDeleted:        boolean;
+  createdAt:        string;
+  updatedAt:        string;
+};
+
+type SyncBatchBody = {
+  documents: SyncDocumentInput[];
+};
+
+type SyncItemStatus = SyncResult | 'forbidden';
+
+type SyncItemResult = {
+  id:              string;
+  status:          SyncItemStatus;
+  serverUpdatedAt: string;
+};
+
+// ── Types Sync pull ──────────────────────────────────────────────
+
+type PullSyncQuery = {
+  workspaceId: string;
+  since?:      string; // ISO 8601 ou absent → premier pull
 };
 
 // ── Helper : FastifyRequest augmenté par @fastify/multipart ──────────────────
@@ -74,6 +116,30 @@ function toListDto(doc: Document) {
     detectedType:     doc.intelligence?.detectedType ?? null,
     uploadedAt:       doc.uploadedAt.toISOString(),
     updatedAt:        doc.updatedAt.toISOString(),
+  };
+}
+
+/**
+ * DTO enrichi pour la sync pull — inclut isDeleted (tombstone) et les champs
+ * intelligence/metadata nécessaires à la reconstruction locale.
+ */
+function toSyncDto(doc: Document) {
+  return {
+    ...toListDto(doc),
+    isDeleted:            doc.isDeleted,
+    notes:                doc.metadata.notes,
+    pageCount:            doc.pageCount,
+    s3Key:                doc.s3Key,
+    extractedText:        doc.extractedText,
+    textExtractionMethod: doc.textExtractionMethod,
+    intelligence: doc.intelligence
+      ? {
+        detectedType:          doc.intelligence.detectedType,
+        globalConfidenceScore: doc.intelligence.globalConfidenceScore,
+        suggestedTags:         [...doc.intelligence.suggestedTags],
+        extractedEntities:     doc.intelligence.extractedEntities,
+      }
+      : null,
   };
 }
 
@@ -236,6 +302,95 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
       );
 
       return reply.status(201).send(createSuccessResponse(toListDto(document)));
+    },
+  );
+
+  // ── POST /sync — push batch LWW ─────────────────────────────
+
+  fastify.post<{ Body: SyncBatchBody }>(
+    '/sync',
+    {
+      schema:     { body: syncDocumentsBatchBodySchema },
+      preHandler: authenticate,
+    },
+    async (request, reply) => {
+      const userId        = request.user.sub;
+      const { documents } = request.body;
+      const serverNow     = new Date();
+
+      const results: SyncItemResult[] = await Promise.all(
+        documents.map(async (doc): Promise<SyncItemResult> => {
+          try {
+            await workspaceService.findById(doc.workspaceId, userId);
+          } catch {
+            return { id: doc.id, status: 'forbidden', serverUpdatedAt: serverNow.toISOString() };
+          }
+
+          const status = await documentRepo.syncUpsert({
+            id:               doc.id,
+            workspaceId:      doc.workspaceId,
+            uploadedById:     userId,
+            originalFilename: doc.originalFilename,
+            mimeType:         doc.mimeType,
+            fileSizeBytes:    doc.fileSizeBytes,
+            s3Key:            doc.s3Key,
+            title:            doc.title,
+            userTags:         doc.userTags,
+            notes:            doc.notes,
+            isDeleted:        doc.isDeleted,
+            clientCreatedAt:  new Date(doc.createdAt),
+            clientUpdatedAt:  new Date(doc.updatedAt),
+          });
+
+          return { id: doc.id, status, serverUpdatedAt: serverNow.toISOString() };
+        }),
+      );
+
+      return reply.send(createSuccessResponse({ results }));
+    },
+  );
+
+  // ── GET /sync — pull since ───────────────────────────────────
+  //
+  // Retourne tous les documents du workspace modifiés (syncedAt) après `since`.
+  // Inclut les soft-deleted pour permettre au client de tombstoner localement.
+  // `server_timestamp` doit être capturé AVANT la requête DB pour éviter
+  // de manquer des documents créés pendant l'exécution de la requête.
+
+  fastify.get<{ Querystring: PullSyncQuery }>(
+    '/sync',
+    {
+      schema:     { querystring: pullSyncQuerySchema },
+      preHandler: authenticate,
+    },
+    async (request, reply) => {
+      const { workspaceId, since } = request.query;
+
+      // Vérification ownership du workspace
+      await workspaceService.findById(workspaceId, request.user.sub);
+
+      // Capture du timestamp serveur AVANT la requête DB
+      // → le client utilisera cette valeur comme `since` lors du prochain pull,
+      //   ce qui évite la race condition entre la lecture et les écritures concurrentes.
+      const serverTimestamp = new Date();
+
+      // Résolution du `since` :
+      // - Absent ou "0"   → epoch (premier pull complet)
+      // - ISO 8601 valide → Date parsée
+      const sinceDate: Date = (() => {
+        if (!since || since === '0') return EPOCH;
+        const parsed = new Date(since);
+        return isNaN(parsed.getTime()) ? EPOCH : parsed;
+      })();
+
+      const documents = await documentRepo.findSince(workspaceId, sinceDate);
+
+      return reply.send(
+        createSuccessResponse({
+          documents:        documents.map(toSyncDto),
+          server_timestamp: serverTimestamp.toISOString(),
+        }),
+      );
     },
   );
 
@@ -478,7 +633,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
         throw new AppError(
           'INVALID_STATUS_TRANSITION',
           `Impossible d'archiver : statut "${doc.processingStatus}" non éligible. ` +
-          'Statuts autorisés : ENRICHED, CLASSIFIEDONLY.',
+          'Statuts autorisés : ENRICHED, CLASSIFIED_ONLY.',
         );
       }
 

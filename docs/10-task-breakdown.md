@@ -213,19 +213,19 @@
 
 > **Objectif** : endpoint de sync LWW opérationnel, recherche FTS PostgreSQL, share links publics.
 
-- [ ] **Ticket 5.1 — DocumentRepositoryAdapter : méthode syncUpsert (LWW)**
+- [x] **Ticket 5.1 — DocumentRepositoryAdapter : méthode syncUpsert (LWW)**
   Implémenter `syncUpsert(payload)` dans `document.repository.adapter.ts` : transaction Prisma, si inexistant → CREATE, si existant + `clientUpdatedAt <= existing.updatedAt` → skip, sinon → UPDATE. Retourner `'created' | 'updated' | 'skipped'`.
   **Ref :** `09-database-persistence-blueprint.md §5`
 
-- [ ] **Ticket 5.2 — Route POST /api/v1/documents/sync (push batch)**
+- [x] **Ticket 5.2 — Route POST /api/v1/documents/sync (push batch)**
   `POST /documents/sync` : accepter `{ documents: SyncDocumentPayload[] }`, vérifier ownership workspace pour chaque doc, appeler `syncUpsert`, retourner `{ results: [{ id, status, serverUpdatedAt }] }`.
   **Ref :** `07-api-contract.md §3 POST /documents/sync` · `09-database-persistence-blueprint.md §5`
 
-- [ ] **Ticket 5.3 — Route GET /api/v1/documents/sync (pull since)**
+- [x] **Ticket 5.3 — Route GET /api/v1/documents/sync (pull since)**
   `GET /documents/sync?since=<timestamp>&workspaceId=<id>` : retourner tous les documents du workspace modifiés après `since` (filtre sur `syncedAt`), inclure les soft-deleted (`isDeleted: true`). Retourner aussi `server_timestamp` pour le prochain pull.
   **Ref :** `07-api-contract.md §3 GET /documents/sync`
 
-- [ ] **Ticket 5.4 — Route POST /api/v1/files/upload-url (presigned PUT)**
+- [x] **Ticket 5.4 — Route POST /api/v1/files/upload-url (presigned PUT)**
   `POST /files/upload-url` : valider `{ document_id, mime_type, file_size_bytes }`, vérifier ownership, générer presigned PUT S3 URL valable 10 min, retourner `{ upload_url, s3_key }`.
   **Ref :** `07-api-contract.md §3 POST /files/upload-url` · `03-technical-design-document.md §4`
 

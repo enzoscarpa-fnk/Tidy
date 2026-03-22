@@ -12,6 +12,7 @@ import authRoutes         from './modules/auth/interfaces/http/auth.routes';
 import meRoutes           from './modules/user/interfaces/http/me.routes';
 import workspaceRoutes    from './modules/workspace/interfaces/http/workspace.routes';
 import documentRoutes     from './modules/document/interfaces/http/document.routes';
+import fileRoutes         from './modules/document/interfaces/http/file.routes';
 import { createSuccessResponse } from './shared/response.helpers';
 
 type TidyApp = FastifyInstance<
@@ -69,6 +70,7 @@ export async function buildApp(): Promise<TidyApp> {
   await app.register(meRoutes,        { prefix: '/api/v1' });
   await app.register(workspaceRoutes, { prefix: '/api/v1/workspaces' });
   await app.register(documentRoutes,  { prefix: '/api/v1/documents' });
+  await app.register(fileRoutes,      { prefix: '/api/v1/files' });
 
   return app;
 }
