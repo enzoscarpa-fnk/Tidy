@@ -37,12 +37,8 @@ export const patchDocumentBodySchema = {
   },
 } as const;
 
-// ── Sync batch ───────────────────────────────────────────────────
+// ── Sync batch ────────────────────────────────────────────────────────────────
 
-/**
- * Schéma d'un document individuel dans le batch de sync.
- * Les timestamps sont des strings ISO 8601 — convertis en Date dans le handler.
- */
 export const syncDocumentItemSchema = {
   type: 'object',
   required: [
@@ -75,12 +71,12 @@ export const syncDocumentsBatchBodySchema = {
       type:     'array',
       items:    syncDocumentItemSchema,
       minItems: 1,
-      maxItems: 100, // garde-fou MVP — batch raisonnable
+      maxItems: 100,
     },
   },
 } as const;
 
-// ── Pull sync ────────────────────────────────────────────────────
+// ── Pull sync ─────────────────────────────────────────────────────────────────
 
 export const pullSyncQuerySchema = {
   type: 'object',
@@ -88,18 +84,12 @@ export const pullSyncQuerySchema = {
   additionalProperties: false,
   properties: {
     workspaceId: { type: 'string', format: 'uuid' },
-    // "0" = premier pull complet | ISO 8601 = pull incrémental
-    since: { type: 'string' },
+    since:       { type: 'string' },
   },
 } as const;
 
-// ── Presigned upload URL ─────────────────────────────────────────
+// ── Presigned upload URL ──────────────────────────────────────────────────────
 
-/**
- * Schéma de la requête POST /files/upload-url.
- * file_size_bytes est validé ≤ 50 Mo côté serveur pour échouer tôt,
- * avant même la génération de la presigned URL.
- */
 export const uploadUrlBodySchema = {
   type: 'object',
   required: ['document_id', 'mime_type', 'file_size_bytes'],
@@ -107,6 +97,29 @@ export const uploadUrlBodySchema = {
   properties: {
     document_id:     { type: 'string', format: 'uuid' },
     mime_type:       { type: 'string', minLength: 1, maxLength: 100 },
-    file_size_bytes: { type: 'integer', minimum: 1, maximum: 52_428_800 }, // 50 Mo
+    file_size_bytes: { type: 'integer', minimum: 1, maximum: 52_428_800 },
+  },
+} as const;
+
+// ── Search FTS ────────────────────────────────────────────────────────────────
+
+/**
+ * `q`            : terme(s) de recherche — obligatoire, min 1 char
+ * `workspaceId`  : obligatoire — scope de la recherche
+ * `detectedType` : filtre optionnel, valeurs séparées par virgule
+ * `userTags`     : filtre optionnel, valeurs séparées par virgule
+ * `page` / `limit` : pagination standard
+ */
+export const searchDocumentsQuerySchema = {
+  type: 'object',
+  required: ['workspaceId', 'q'],
+  additionalProperties: false,
+  properties: {
+    workspaceId:  { type: 'string', format: 'uuid' },
+    q:            { type: 'string', minLength: 1, maxLength: 200 },
+    detectedType: { type: 'string' },
+    userTags:     { type: 'string' },
+    page:         { type: 'string', pattern: '^[0-9]+$' },
+    limit:        { type: 'string', pattern: '^[0-9]+$' },
   },
 } as const;

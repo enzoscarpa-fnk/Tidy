@@ -18,6 +18,9 @@ export type ErrorCode =
   | 'RATE_LIMIT_EXCEEDED'
   | 'DOCUMENT_QUOTA_EXCEEDED'
   | 'OCR_SERVICE_UNAVAILABLE'
+  | 'SHARE_LINK_NOT_FOUND'
+  | 'SHARE_LINK_REVOKED'
+  | 'SHARE_LINK_EXPIRED'
   | 'INTERNAL_ERROR';
 
 // Table de mapping code → HTTP status
@@ -31,6 +34,9 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
   DOCUMENT_NOT_FOUND:         404,
   WORKSPACE_NOT_FOUND:        404,
   USER_NOT_FOUND:             404,
+  SHARE_LINK_NOT_FOUND:       404,
+  SHARE_LINK_REVOKED:         404,
+  SHARE_LINK_EXPIRED:         404,
   EMAIL_ALREADY_EXISTS:       409,
   WORKSPACE_NAME_DUPLICATE:   409,
   WORKSPACE_ARCHIVED:         422,

@@ -39,48 +39,52 @@ export interface DocumentFilters {
   limit?:            number;
 }
 
-// ── Types Sync LWW ───────────────────────────────────────────────
+// ── Types Sync LWW ────────────────────────────────────────────────────────────
 
-/**
- * Résultat de syncUpsert :
- * - 'created'  → document inexistant, créé en base
- * - 'updated'  → clientUpdatedAt > serverUpdatedAt, mise à jour effectuée
- * - 'skipped'  → clientUpdatedAt ≤ serverUpdatedAt, serveur plus récent, ignoré
- */
 export type SyncResult = 'created' | 'updated' | 'skipped';
 
-/**
- * Payload envoyé par le client mobile pour synchroniser un document.
- * Seuls les champs éditables côté client participent au LWW.
- * Les champs gérés par le pipeline serveur (intelligence, extractedText,
- * processingStatus, detectedType) ne sont jamais écrasés par la sync.
- */
 export interface SyncUpsertPayload {
-  // Identité
   id:               string;
   workspaceId:      string;
   uploadedById:     string;
-
-  // Métadonnées techniques (éditables client au sens upload)
   originalFilename: string;
   mimeType:         string;
   fileSizeBytes:    number;
   s3Key:            string | null;
-
-  // Métadonnées utilisateur (éditables client)
   title:            string;
   userTags:         string[];
   notes:            string | null;
-
-  // Cycle de vie
   isDeleted:        boolean;
-
-  // Horloges clientes (source LWW)
   clientCreatedAt:  Date;
   clientUpdatedAt:  Date;
 }
 
-// ── Interface du port ────────────────────────────────────────────────────────
+// ── Types Search FTS ──────────────────────────────────────────────────────────
+
+/**
+ * Filtres pour la recherche full-text PostgreSQL.
+ * `query` est obligatoire — la route `GET /documents/search` l'exige.
+ */
+export interface SearchFilters {
+  workspaceId:   string;
+  query:         string;
+  detectedType?: DetectedType[];
+  userTags?:     string[];
+  page?:         number;
+  limit?:        number;
+}
+
+/**
+ * Un résultat de recherche FTS enrichi d'un extrait `ts_headline`
+ * (termes surlignés via balises <mark>) et du score `ts_rank`.
+ */
+export interface SearchDocumentResult {
+  document: Document;
+  headline: string;
+  rank:     number;
+}
+
+// ── Interface du port ─────────────────────────────────────────────────────────
 
 export interface IDocumentRepository {
   create(data: CreateDocumentData): Promise<Document>;
@@ -98,4 +102,5 @@ export interface IDocumentRepository {
   ): Promise<void>;
   syncUpsert(payload: SyncUpsertPayload): Promise<SyncResult>;
   findSince(workspaceId: string, since: Date): Promise<Document[]>;
+  search(filters: SearchFilters): Promise<{ items: SearchDocumentResult[]; total: number }>;
 }

@@ -13,6 +13,8 @@ import type {
   DocumentFilters,
   SyncUpsertPayload,
   SyncResult,
+  SearchFilters,
+  SearchDocumentResult,
 } from '../../../modules/document/domain/ports/document.repository.port';
 import { Document }             from '../../../modules/document/domain/document.aggregate';
 import type { ProcessingStatus, TextExtractionMethod } from '../../../modules/document/domain/document.aggregate';
@@ -20,6 +22,13 @@ import { DocumentMetadata }     from '../../../modules/document/domain/document-
 import type { MetadataJson }    from '../../../modules/document/domain/document-metadata.value-object';
 import { DocumentIntelligence } from '../../../modules/document/domain/document-intelligence.value-object';
 import type { IntelligenceJson, DetectedType } from '../../../modules/document/domain/document-intelligence.value-object';
+
+// ── Type interne pour les résultats FTS (d.* + headline + rank) ───────────────
+
+interface SearchRawRow extends PrismaDocument {
+  headline: string;
+  rank:     number;
+}
 
 export class DocumentRepositoryAdapter implements IDocumentRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -67,7 +76,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     });
   }
 
-  // ── Création ───────────────────────────────────────────────────────────────
+  // ── Création ──────────────────────────────────────────────────────────────
 
   async create(data: CreateDocumentData): Promise<Document> {
     const title = (data.title?.trim() || null) ?? data.originalFilename.replace(/\.[^.]+$/, '');
@@ -93,7 +102,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     return this.toDomain(row);
   }
 
-  // ── Lecture simple ─────────────────────────────────────────────────────────
+  // ── Lecture simple ────────────────────────────────────────────────────────
 
   async findById(id: string): Promise<Document | null> {
     const row = await this.prisma.document.findUnique({ where: { id } });
@@ -200,7 +209,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const [rows, countRows] = await Promise.all([
       this.prisma.$queryRaw<PrismaDocument[]>`
         SELECT d.*
-        FROM   "Document" d
+        FROM   "documents" d
         WHERE  ${where}
         ORDER  BY ${orderBy}
           LIMIT  ${limit}
@@ -208,7 +217,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
       `,
       this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
-        FROM   "Document" d
+        FROM   "documents" d
         WHERE  ${where}
       `,
     ]);
@@ -219,7 +228,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     };
   }
 
-  // ── Mise à jour ────────────────────────────────────────────────────────────
+  // ── Mise à jour ───────────────────────────────────────────────────────────
 
   async update(id: string, data: UpdateDocumentData): Promise<Document> {
     const row = await this.prisma.document.update({
@@ -271,41 +280,22 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     });
   }
 
-  // ── Sync LWW ─────────────────────────────────────────────────
+  // ── Sync LWW ──────────────────────────────────────────────────────────────
 
-  /**
-   * Upsert avec stratégie Last Write Wins.
-   *
-   * Règles :
-   *   - Document inexistant          → CREATE  → 'created'
-   *   - clientUpdatedAt ≤ updatedAt  → SKIP    → 'skipped'  (serveur gagne, égalité incluse)
-   *   - clientUpdatedAt > updatedAt  → UPDATE  → 'updated'  (client plus récent)
-   *
-   * Seuls les champs éditables côté client sont LWW.
-   * Les champs pipeline (intelligence, detectedType, extractedText,
-   * processingStatus, textExtractionMethod) ne sont jamais écrasés par la sync.
-   *
-   * syncedAt = horloge serveur, mis à jour à chaque CREATE/UPDATE.
-   * updatedAt = horloge cliente, source de vérité LWW.
-   */
   async syncUpsert(payload: SyncUpsertPayload): Promise<SyncResult> {
     return this.prisma.$transaction(async (tx) => {
-
-      // ── 1. Lire l'état actuel (lecture minimale — seul updatedAt nécessaire) ──
 
       const existing = await tx.document.findUnique({
         where:  { id: payload.id },
         select: { updatedAt: true },
       });
 
-      // ── 2. CAS : document inexistant → CREATE ──────────────────────────────
-
       if (!existing) {
         const metadata = new DocumentMetadata(
           payload.title,
           payload.userTags,
           payload.notes,
-          null, // lastEditedAt : inconnu côté serveur lors de la création via sync
+          null,
         );
 
         await tx.document.create({
@@ -323,27 +313,23 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
             metadata:         metadata.toJSON() as Prisma.InputJsonValue,
             intelligence:     Prisma.JsonNull,
             uploadedAt:       payload.clientCreatedAt,
-            updatedAt:        payload.clientUpdatedAt, // horloge cliente
-            syncedAt:         new Date(),              // horloge serveur
+            updatedAt:        payload.clientUpdatedAt,
+            syncedAt:         new Date(),
           },
         });
 
         return 'created';
       }
 
-      // ── 3. CAS : LWW — le serveur gagne en cas d'égalité exacte ────────────
-
       if (payload.clientUpdatedAt <= existing.updatedAt) {
         return 'skipped';
       }
-
-      // ── 4. CAS : client plus récent → UPDATE des champs éditables client ───
 
       const metadata = new DocumentMetadata(
         payload.title,
         payload.userTags,
         payload.notes,
-        payload.clientUpdatedAt, // lastEditedAt = timestamp de la dernière édition cliente
+        payload.clientUpdatedAt,
       );
 
       await tx.document.update({
@@ -354,11 +340,8 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
           s3Key:            payload.s3Key,
           title:            metadata.title,
           metadata:         metadata.toJSON() as Prisma.InputJsonValue,
-          updatedAt:        payload.clientUpdatedAt, // horloge cliente
-          syncedAt:         new Date(),              // horloge serveur
-          //   PAS de mise à jour de : processingStatus, textExtractionMethod,
-          //   extractedText, intelligence, detectedType, thumbnailRef
-          //   → champs pipeline, source de vérité = serveur uniquement
+          updatedAt:        payload.clientUpdatedAt,
+          syncedAt:         new Date(),
         },
       });
 
@@ -366,23 +349,87 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     });
   }
 
-  // ── Sync — pull since ────────────────────────────────────────
+  // ── Sync — pull since ─────────────────────────────────────────────────────
 
-  /**
-   * Retourne tous les documents dont syncedAt > since, triés par syncedAt ASC.
-   * Inclut les soft-deleted pour que le client puisse les tombstoner localement.
-   * since = epoch → premier pull complet du workspace.
-   */
   async findSince(workspaceId: string, since: Date): Promise<Document[]> {
     const rows = await this.prisma.document.findMany({
       where: {
         workspaceId,
         syncedAt: { gt: since },
-        // ⚠ PAS de filtre isDeleted — le client doit recevoir les tombstones
       },
       orderBy: { syncedAt: 'asc' },
     });
 
     return rows.map(this.toDomain.bind(this));
+  }
+
+  // ── Recherche FTS PostgreSQL ──────────────────────────────────────────────
+
+  /**
+   * Recherche full-text via `searchVector @@ plainto_tsquery('french', query)`.
+   *
+   * - `ts_headline` génère un extrait avec termes surlignés (<mark>…</mark>).
+   *   La source est `extractedText` en priorité, sinon `title`.
+   * - `ts_rank` trie par pertinence décroissante.
+   * - Filtres `detectedType` et `userTags` (GIN jsonb) sont cumulables.
+   * - Seuls les documents non supprimés du workspace sont exposés.
+   */
+  async search(
+    filters: SearchFilters,
+  ): Promise<{ items: SearchDocumentResult[]; total: number }> {
+    const page   = Math.max(1, filters.page  ?? 1);
+    const limit  = Math.min(100, Math.max(1, filters.limit ?? 20));
+    const offset = (page - 1) * limit;
+
+    const conditions: Prisma.Sql[] = [
+      Prisma.sql`d."workspaceId" = ${filters.workspaceId}::uuid`,
+      Prisma.sql`d."isDeleted"   = false`,
+      Prisma.sql`d."searchVector" @@ plainto_tsquery('french', ${filters.query})`,
+    ];
+
+    if (filters.detectedType?.length) {
+      const vals = Prisma.raw(filters.detectedType.map(s => `'${s}'`).join(', '));
+      conditions.push(Prisma.sql`d."detectedType"::text = ANY(ARRAY[${vals}])`);
+    }
+
+    if (filters.userTags?.length) {
+      const tagsJson = JSON.stringify(filters.userTags);
+      conditions.push(Prisma.sql`d.metadata->'userTags' @> ${tagsJson}::jsonb`);
+    }
+
+    const where = Prisma.join(conditions, ' AND ');
+
+    const [rows, countRows] = await Promise.all([
+      this.prisma.$queryRaw<SearchRawRow[]>`
+        SELECT
+          d.*,
+          ts_headline(
+            'french',
+            COALESCE(NULLIF(d."extractedText", ''), d.title, ''),
+            plainto_tsquery('french', ${filters.query}),
+            'MaxWords=35, MinWords=15, StartSel=<mark>, StopSel=</mark>, HighlightAll=false'
+          )                                                                          AS headline,
+          ts_rank(d."searchVector", plainto_tsquery('french', ${filters.query}))    AS rank
+        FROM   "documents" d
+        WHERE  ${where}
+        ORDER  BY rank DESC
+        LIMIT  ${limit}
+        OFFSET ${offset}
+      `,
+      this.prisma.$queryRaw<[{ count: bigint }]>`
+        SELECT COUNT(*) AS count
+        FROM   "documents" d
+        WHERE  ${where}
+      `,
+    ]);
+
+    return {
+      items: rows.map((row) => ({
+        document: this.toDomain(row),
+        headline: row.headline ?? '',
+        rank:     Number(row.rank ?? 0),
+      })),
+      total: Number(countRows[0]?.count ?? 0),
+    };
   }
 }

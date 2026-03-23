@@ -23,6 +23,7 @@ import {
   patchDocumentBodySchema,
   syncDocumentsBatchBodySchema,
   pullSyncQuerySchema,
+  searchDocumentsQuerySchema,
 }                                    from './document.schemas';
 
 // ── Constantes ────────────────────────────────────────────────────────────────
@@ -34,7 +35,6 @@ const DOWNLOAD_URL_TTL_SEC = 15 * 60;
 const REPROCESSABLE_STATUSES = new Set<ProcessingStatus>(['FAILED']);
 const ARCHIVABLE_STATUSES    = new Set<ProcessingStatus>(['ENRICHED', 'CLASSIFIED_ONLY']);
 
-/** Epoch UNIX — utilisé comme `since` par défaut (premier pull complet) */
 const EPOCH = new Date(0);
 
 // ── Types de requête ──────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ type PatchBody = {
   userOverrideType?: DetectedType;
 };
 
-// ── Types Sync push ──────────────────────────────────────────────
+// ── Types Sync push ───────────────────────────────────────────────────────────
 
 type SyncDocumentInput = {
   id:               string;
@@ -87,11 +87,22 @@ type SyncItemResult = {
   serverUpdatedAt: string;
 };
 
-// ── Types Sync pull ──────────────────────────────────────────────
+// ── Types Sync pull ───────────────────────────────────────────────────────────
 
 type PullSyncQuery = {
   workspaceId: string;
-  since?:      string; // ISO 8601 ou absent → premier pull
+  since?:      string;
+};
+
+// ── Types Search FTS ──────────────────────────────────────────────────────────
+
+type SearchQuery = {
+  workspaceId:   string;
+  q:             string;
+  detectedType?: string;
+  userTags?:     string;
+  page?:         string;
+  limit?:        string;
 };
 
 // ── Helper : FastifyRequest augmenté par @fastify/multipart ──────────────────
@@ -119,10 +130,6 @@ function toListDto(doc: Document) {
   };
 }
 
-/**
- * DTO enrichi pour la sync pull — inclut isDeleted (tombstone) et les champs
- * intelligence/metadata nécessaires à la reconstruction locale.
- */
 function toSyncDto(doc: Document) {
   return {
     ...toListDto(doc),
@@ -140,6 +147,18 @@ function toSyncDto(doc: Document) {
         extractedEntities:     doc.intelligence.extractedEntities,
       }
       : null,
+  };
+}
+
+/**
+ * DTO pour un résultat de recherche FTS.
+ * Étend `toListDto` avec `headline` (extrait surligné) et `rank` (score pertinence).
+ */
+function toSearchResultDto(item: { document: Document; headline: string; rank: number }) {
+  return {
+    ...toListDto(item.document),
+    headline: item.headline,
+    rank:     item.rank,
   };
 }
 
@@ -185,7 +204,7 @@ function toDetailDto(
   };
 }
 
-// ── Helper partagé : récupère un doc et vérifie l'ownership ──────────────────
+// ── Helper partagé : ownership check ─────────────────────────────────────────
 
 async function resolveDocument(
   documentRepo: DocumentRepositoryAdapter,
@@ -216,7 +235,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
   const workspaceService = new WorkspaceService(new WorkspaceRepositoryAdapter(fastify.prisma));
   const s3               = S3ServiceAdapter.fromEnv();
 
-  // ── POST / — upload multipart ──────────────────────────────────────────────
+  // ── POST / — upload multipart ─────────────────────────────────────────────
 
   fastify.post(
     '/',
@@ -305,7 +324,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── POST /sync — push batch LWW ─────────────────────────────
+  // ── POST /sync — push batch LWW ───────────────────────────────────────────
 
   fastify.post<{ Body: SyncBatchBody }>(
     '/sync',
@@ -350,12 +369,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── GET /sync — pull since ───────────────────────────────────
-  //
-  // Retourne tous les documents du workspace modifiés (syncedAt) après `since`.
-  // Inclut les soft-deleted pour permettre au client de tombstoner localement.
-  // `server_timestamp` doit être capturé AVANT la requête DB pour éviter
-  // de manquer des documents créés pendant l'exécution de la requête.
+  // ── GET /sync — pull since ────────────────────────────────────────────────
 
   fastify.get<{ Querystring: PullSyncQuery }>(
     '/sync',
@@ -366,17 +380,10 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const { workspaceId, since } = request.query;
 
-      // Vérification ownership du workspace
       await workspaceService.findById(workspaceId, request.user.sub);
 
-      // Capture du timestamp serveur AVANT la requête DB
-      // → le client utilisera cette valeur comme `since` lors du prochain pull,
-      //   ce qui évite la race condition entre la lecture et les écritures concurrentes.
       const serverTimestamp = new Date();
 
-      // Résolution du `since` :
-      // - Absent ou "0"   → epoch (premier pull complet)
-      // - ISO 8601 valide → Date parsée
       const sinceDate: Date = (() => {
         if (!since || since === '0') return EPOCH;
         const parsed = new Date(since);
@@ -394,7 +401,55 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── GET / — liste avec filtres ─────────────────────────────────────────────
+  // ── GET /search — recherche full-text PostgreSQL ──────────────────────────
+  //
+  // ⚠ Cette route DOIT être déclarée AVANT `GET /:id` pour que Fastify ne
+  //   traite pas le segment "search" comme un paramètre :id.
+
+  fastify.get<{ Querystring: SearchQuery }>(
+    '/search',
+    {
+      schema:     { querystring: searchDocumentsQuerySchema },
+      preHandler: authenticate,
+    },
+    async (request, reply) => {
+      const { workspaceId, q, detectedType, userTags, page, limit } = request.query;
+
+      // Vérification ownership du workspace
+      await workspaceService.findById(workspaceId, request.user.sub);
+
+      const parsedPage  = Math.max(1, parseInt(page  ?? '1',  10) || 1);
+      const parsedLimit = Math.min(100, Math.max(1, parseInt(limit ?? '20', 10) || 20));
+
+      const detectedTypeFilter = detectedType
+        ? (detectedType.split(',').map(s => s.trim()).filter(Boolean) as DetectedType[])
+        : undefined;
+
+      const userTagsFilter = userTags
+        ? userTags.split(',').map(s => s.trim()).filter(Boolean)
+        : undefined;
+
+      const { items, total } = await documentRepo.search({
+        workspaceId,
+        query:                     q.trim(),
+        ...(detectedTypeFilter && { detectedType: detectedTypeFilter }),
+        ...(userTagsFilter     && { userTags:     userTagsFilter }),
+        page:  parsedPage,
+        limit: parsedLimit,
+      });
+
+      return reply.send(
+        createPaginatedResponse(
+          items.map(toSearchResultDto),
+          total,
+          parsedPage,
+          parsedLimit,
+        ),
+      );
+    },
+  );
+
+  // ── GET / — liste avec filtres ────────────────────────────────────────────
 
   fastify.get<{ Querystring: ListQuery }>(
     '/',
@@ -445,7 +500,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── GET /:id — détail complet ──────────────────────────────────────────────
+  // ── GET /:id — détail complet ─────────────────────────────────────────────
 
   fastify.get<{ Params: IdParam }>(
     '/:id',
@@ -550,7 +605,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── DELETE /:id — soft delete ──────────────────────────────────────────────
+  // ── DELETE /:id — soft delete ─────────────────────────────────────────────
 
   fastify.delete<{ Params: IdParam }>(
     '/:id',
@@ -569,7 +624,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── POST /:id/reprocess ────────────────────────────────────────────────────
+  // ── POST /:id/reprocess ───────────────────────────────────────────────────
 
   fastify.post<{ Params: IdParam }>(
     '/:id/reprocess',
@@ -616,7 +671,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── POST /:id/archive ──────────────────────────────────────────────────────
+  // ── POST /:id/archive ─────────────────────────────────────────────────────
 
   fastify.post<{ Params: IdParam }>(
     '/:id/archive',
