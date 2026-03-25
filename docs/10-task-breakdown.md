@@ -213,43 +213,43 @@
 
 > **Objectif** : endpoint de sync LWW opérationnel, recherche FTS PostgreSQL, share links publics.
 
-- [ ] **Ticket 5.1 — DocumentRepositoryAdapter : méthode syncUpsert (LWW)**
+- [x] **Ticket 5.1 — DocumentRepositoryAdapter : méthode syncUpsert (LWW)**
   Implémenter `syncUpsert(payload)` dans `document.repository.adapter.ts` : transaction Prisma, si inexistant → CREATE, si existant + `clientUpdatedAt <= existing.updatedAt` → skip, sinon → UPDATE. Retourner `'created' | 'updated' | 'skipped'`.
   **Ref :** `09-database-persistence-blueprint.md §5`
 
-- [ ] **Ticket 5.2 — Route POST /api/v1/documents/sync (push batch)**
+- [x] **Ticket 5.2 — Route POST /api/v1/documents/sync (push batch)**
   `POST /documents/sync` : accepter `{ documents: SyncDocumentPayload[] }`, vérifier ownership workspace pour chaque doc, appeler `syncUpsert`, retourner `{ results: [{ id, status, serverUpdatedAt }] }`.
   **Ref :** `07-api-contract.md §3 POST /documents/sync` · `09-database-persistence-blueprint.md §5`
 
-- [ ] **Ticket 5.3 — Route GET /api/v1/documents/sync (pull since)**
+- [x] **Ticket 5.3 — Route GET /api/v1/documents/sync (pull since)**
   `GET /documents/sync?since=<timestamp>&workspaceId=<id>` : retourner tous les documents du workspace modifiés après `since` (filtre sur `syncedAt`), inclure les soft-deleted (`isDeleted: true`). Retourner aussi `server_timestamp` pour le prochain pull.
   **Ref :** `07-api-contract.md §3 GET /documents/sync`
 
-- [ ] **Ticket 5.4 — Route POST /api/v1/files/upload-url (presigned PUT)**
+- [x] **Ticket 5.4 — Route POST /api/v1/files/upload-url (presigned PUT)**
   `POST /files/upload-url` : valider `{ document_id, mime_type, file_size_bytes }`, vérifier ownership, générer presigned PUT S3 URL valable 10 min, retourner `{ upload_url, s3_key }`.
   **Ref :** `07-api-contract.md §3 POST /files/upload-url` · `03-technical-design-document.md §4`
 
-- [ ] **Ticket 5.5 — Route GET /api/v1/documents/search (FTS PostgreSQL)**
+- [x] **Ticket 5.5 — Route GET /api/v1/documents/search (FTS PostgreSQL)**
   Implémenter la recherche full-text via `search_vector @@ plainto_tsquery('french', ?)` + filtre `detectedType`, `userTags` (GIN), `workspaceId`. Construire la query Prisma avec `$queryRaw`. Retourner extraits (`ts_headline`) avec termes surlignés.
   **Ref :** `07-api-contract.md §3 GET /documents/search` · `09-database-persistence-blueprint.md §6`
 
-- [ ] **Ticket 5.6 — ShareLinkRepositoryAdapter**
+- [x] **Ticket 5.6 — ShareLinkRepositoryAdapter**
   Créer `src/infra/database/repositories/share-link.repository.adapter.ts`. Implémenter : `create(data)`, `findByToken(token)`, `findByDocumentId(docId)`, `revoke(id)`, `revokeAllForDocument(docId)`, `incrementAccessCount(id)`.
   **Ref :** `09-database-persistence-blueprint.md §1 ShareLink`
 
-- [ ] **Ticket 5.7 — Route POST /api/v1/documents/:id/share**
+- [x] **Ticket 5.7 — Route POST /api/v1/documents/:id/share**
   Créer `src/modules/share/interfaces/http/share.routes.ts`. `POST /:id/share` : valider `{ expiresIn: '24h' | '7d' | '30d' }`, révoquer l'éventuel lien existant (invariant : 1 lien actif max), générer token `randomBytes(32).toString('base64url')`, create ShareLink, retourner `{ shareUrl, token, expiresAt }`.
   **Ref :** `07-api-contract.md §3 POST /documents/:id/share` · `02-product-requirements-document.md §7 F4`
 
-- [ ] **Ticket 5.8 — Route DELETE /api/v1/share/:linkId (révocation)**
+- [x] **Ticket 5.8 — Route DELETE /api/v1/share/:linkId (révocation)**
   `DELETE /share/:linkId` : ownership check (via userId sur ShareLink), `isRevoked = true`, return 204.
   **Ref :** `07-api-contract.md §3 DELETE /share/:linkId`
 
-- [ ] **Ticket 5.9 — Route GET /s/:token (accès public sans auth)**
+- [x] **Ticket 5.9 — Route GET /s/:token (accès public sans auth)**
   Route **hors prefix** `/api/v1`. Lookup ShareLink par token, vérifier `!isRevoked` et `expiresAt > now()`, incrémenter `accessCount`, générer presigned GET URL S3, retourner `{ document: { title, mimeType }, downloadUrl }`. Si expiré/révoqué → 404 avec message explicite.
   **Ref :** `07-api-contract.md §3 GET /s/:token` · `03-technical-design-document.md §8`
 
-- [ ] **Ticket 5.10 — Route GET /api/v1/ocr/process (proxy OCR mobile)**
+- [x] **Ticket 5.10 — Route GET /api/v1/ocr/process (proxy OCR mobile)**
   `POST /ocr/process` : route authentifiée. Accepter `{ document_id, file_base64, mime_type }`, vérifier ownership, appeler `MistralOcrAdapter`, retourner `{ ocr_text, confidence }`. **La clé Mistral ne quitte jamais le backend.**
   **Ref :** `03-technical-design-document.md §6` · `08-ui-component-blueprint.md useSyncService._callOcrWithRetry`
 

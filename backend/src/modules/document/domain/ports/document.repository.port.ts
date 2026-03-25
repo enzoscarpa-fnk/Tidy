@@ -2,8 +2,10 @@ import type { Document, ProcessingStatus, TextExtractionMethod } from '../docume
 import type { DocumentMetadata } from '../document-metadata.value-object';
 import type { DocumentIntelligence, DetectedType } from '../document-intelligence.value-object';
 
+// ── Types existants ───────────────────────────────────────────────────────────
+
 export interface CreateDocumentData {
-  id:               string;   // UUID généré côté client
+  id:               string;
   workspaceId:      string;
   uploadedById:     string;
   originalFilename: string;
@@ -37,6 +39,53 @@ export interface DocumentFilters {
   limit?:            number;
 }
 
+// ── Types Sync LWW ────────────────────────────────────────────────────────────
+
+export type SyncResult = 'created' | 'updated' | 'skipped';
+
+export interface SyncUpsertPayload {
+  id:               string;
+  workspaceId:      string;
+  uploadedById:     string;
+  originalFilename: string;
+  mimeType:         string;
+  fileSizeBytes:    number;
+  s3Key:            string | null;
+  title:            string;
+  userTags:         string[];
+  notes:            string | null;
+  isDeleted:        boolean;
+  clientCreatedAt:  Date;
+  clientUpdatedAt:  Date;
+}
+
+// ── Types Search FTS ──────────────────────────────────────────────────────────
+
+/**
+ * Filtres pour la recherche full-text PostgreSQL.
+ * `query` est obligatoire — la route `GET /documents/search` l'exige.
+ */
+export interface SearchFilters {
+  workspaceId:   string;
+  query:         string;
+  detectedType?: DetectedType[];
+  userTags?:     string[];
+  page?:         number;
+  limit?:        number;
+}
+
+/**
+ * Un résultat de recherche FTS enrichi d'un extrait `ts_headline`
+ * (termes surlignés via balises <mark>) et du score `ts_rank`.
+ */
+export interface SearchDocumentResult {
+  document: Document;
+  headline: string;
+  rank:     number;
+}
+
+// ── Interface du port ─────────────────────────────────────────────────────────
+
 export interface IDocumentRepository {
   create(data: CreateDocumentData): Promise<Document>;
   findById(id: string): Promise<Document | null>;
@@ -51,4 +100,7 @@ export interface IDocumentRepository {
     status: ProcessingStatus,
     textExtractionMethod?: TextExtractionMethod | null,
   ): Promise<void>;
+  syncUpsert(payload: SyncUpsertPayload): Promise<SyncResult>;
+  findSince(workspaceId: string, since: Date): Promise<Document[]>;
+  search(filters: SearchFilters): Promise<{ items: SearchDocumentResult[]; total: number }>;
 }

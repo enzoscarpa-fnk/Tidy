@@ -1,5 +1,3 @@
----
-
 # Domain Blueprint — Gestionnaire Documentaire Intelligent (MVP)
 
 > Version : 1.0 · Scope : MVP · Méthodologie : DDD + BMAD
