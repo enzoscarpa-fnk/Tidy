@@ -5,6 +5,7 @@ import Fastify, {
   FastifyTypeProviderDefault,
 } from 'fastify';
 import type { IncomingMessage, ServerResponse } from 'http';
+import cors                  from '@fastify/cors';
 import prismaPlugin          from './infra/database/prisma.plugin';
 import errorHandlerPlugin    from './shared/plugins/error-handler.plugin';
 import processingPlugin      from './modules/processing/processing.plugin';
@@ -55,10 +56,20 @@ export async function buildApp(): Promise<TidyApp> {
     },
   }) as TidyApp;
 
+  // ── CORS ──────────────────────────────────────────────────────────────────
+  await app.register(cors, {
+    origin: isDev
+      ? ['http://localhost:3001', 'capacitor://localhost', 'http://localhost']
+      : (process.env['ALLOWED_ORIGINS'] ?? '').split(',').filter(Boolean),
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
+
   // ── Plugins infrastructure (ordre strict) ─────────────────────────────────
   await app.register(errorHandlerPlugin);
   await app.register(prismaPlugin);
-  await app.register(processingPlugin); // dépend de prismaPlugin
+  await app.register(processingPlugin);
 
   // ── Health check ──────────────────────────────────────────────────────────
   app.get('/health', async (_request, _reply) => {
@@ -75,14 +86,9 @@ export async function buildApp(): Promise<TidyApp> {
   await app.register(documentRoutes,  { prefix: '/api/v1/documents' });
   await app.register(fileRoutes,      { prefix: '/api/v1/files' });
   await app.register(ocrRoutes,       { prefix: '/api/v1/ocr' });
-
-  // shareRoutes expose :
-  //   POST   /api/v1/documents/:id/share
-  //   DELETE /api/v1/share/:linkId
   await app.register(shareRoutes,     { prefix: '/api/v1' });
 
   // ── Route publique (sans auth) ────────────────────────────────────────────
-  // GET /s/:token — accès au document partagé
   await app.register(publicShareRoutes, { prefix: '/s' });
 
   return app;

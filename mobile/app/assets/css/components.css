@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* ── Badges statut document ─────────────────────────────────────────── */
+  .badge-status {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* ── Carte générique ────────────────────────────────────────────────── */
+  .card-base {
+    @apply rounded-2xl bg-tidy-surface-card border border-tidy-border shadow-sm p-4;
+  }
+
+  /* ── Boutons ────────────────────────────────────────────────────────── */
+  .btn-primary {
+    @apply flex w-full items-center justify-center rounded-xl bg-tidy-primary py-3.5
+    text-sm font-semibold text-tidy-text-inverse
+    transition-opacity active:opacity-80
+    disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply flex w-full items-center justify-center rounded-xl border border-tidy-border
+    bg-white py-3.5 text-sm font-semibold text-tidy-text-primary
+    transition-opacity active:opacity-80
+    disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply flex items-center justify-center rounded-xl px-4 py-2.5
+    text-sm font-medium text-tidy-primary
+    transition-opacity active:opacity-70;
+  }
+
+  /* ── Champs de formulaire ───────────────────────────────────────────── */
+  .input-field {
+    @apply w-full rounded-xl border border-tidy-border bg-white px-4 py-3
+    text-sm text-tidy-text-primary placeholder:text-tidy-text-tertiary
+    transition-colors
+    focus:border-tidy-primary focus:outline-none focus:ring-2 focus:ring-tidy-primary/20
+    disabled:cursor-not-allowed disabled:bg-tidy-surface-overlay;
+  }
+
+  .input-field-error {
+    @apply input-field border-tidy-status-error focus:border-tidy-status-error focus:ring-tidy-status-error/20;
+  }
+
+  .input-label {
+    @apply mb-1.5 block text-sm font-medium text-tidy-text-secondary;
+  }
+}
