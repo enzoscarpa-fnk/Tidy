@@ -261,35 +261,35 @@
 
 > **Objectif** : Nuxt 3 SPA configuré pour Capacitor, pages login/register fonctionnelles avec JWT persisté.
 
-- [ ] **Ticket 6.1 — Init Nuxt 3 + configuration SPA**
+- [x] **Ticket 6.1 — Init Nuxt 3 + configuration SPA**
   Créer le projet Nuxt 3 dans `/mobile` : `npx nuxi@latest init`. Configurer `nuxt.config.ts` : `ssr: false`, `app.baseURL: '/'`. Installer Tailwind CSS (`@nuxtjs/tailwindcss`), Pinia (`@pinia/nuxt`), `@vueuse/core`. Configurer `tsconfig.json` strict.
   **Ref :** `08-ui-component-blueprint.md §1.2`
 
-- [ ] **Ticket 6.2 — Design tokens Tailwind**
+- [x] **Ticket 6.2 — Design tokens Tailwind**
   Créer `tailwind.config.ts`. Déclarer les couleurs sémantiques : `tidy-primary`, `tidy-surface`, `tidy-border`, `tidy-text-*`, `tidy-status-*`. Déclarer l'animation custom `animate-status-pulse` (keyframes pulsation douce). Créer `assets/css/components.css` avec `.badge-status` et `.card-base` via `@apply`.
   **Ref :** `08-ui-component-blueprint.md §1.3`
 
-- [ ] **Ticket 6.3 — Composable $tidyApi (HTTP client)**
+- [x] **Ticket 6.3 — Composable $tidyApi (HTTP client)**
   Créer `composables/useTidyApi.ts`. Wrapper autour de `$fetch` Nuxt : injecter `Authorization: Bearer` depuis `useAuthStore`, gérer le refresh automatique sur 401 (retry une fois après refresh), gérer les erreurs réseau (offline → ne pas throw, retourner null).
   **Ref :** `08-ui-component-blueprint.md §4 useSyncService`
 
-- [ ] **Ticket 6.4 — useAuthStore (Pinia)**
+- [x] **Ticket 6.4 — useAuthStore (Pinia)**
   Créer `stores/auth.store.ts`. State : `accessToken`, `refreshToken`, `user`. Actions : `login(email, password)`, `register(email, password, displayName)`, `refreshTokens()`, `logout()`. Persister `accessToken` et `refreshToken` via `@capacitor-community/secure-storage`. Getter `isAuthenticated`.
   **Ref :** `08-ui-component-blueprint.md §4` · `07-api-contract.md §1`
 
-- [ ] **Ticket 6.5 — Middleware auth.global.ts**
+- [x] **Ticket 6.5 — Middleware auth.global.ts**
   Créer `middleware/auth.global.ts`. Vérifier `useAuthStore().isAuthenticated`. Si non → `navigateTo('/auth/login')`. Exclure les routes `/auth/*` et `/s/*`. Tenter un `refreshTokens()` silencieux si `accessToken` expiré avant de rediriger.
   **Ref :** `08-ui-component-blueprint.md §2.3`
 
-- [ ] **Ticket 6.6 — Page auth/login.vue**
+- [x] **Ticket 6.6 — Page auth/login.vue**
   Créer `pages/auth/login.vue`. Formulaire : email + password + bouton "Se connecter". Appeler `useAuthStore().login()`. En cas de succès → naviguer vers `/`. En cas d'erreur → afficher message inline (pas de toast). Lien "Créer un compte" → `/auth/register`.
   **Ref :** `08-ui-component-blueprint.md §2.2` · `06-ux-flow.md §3`
 
-- [ ] **Ticket 6.7 — Page auth/register.vue**
+- [x] **Ticket 6.7 — Page auth/register.vue**
   Créer `pages/auth/register.vue`. Formulaire : displayName + email + password. Appeler `useAuthStore().register()`. En cas de succès → naviguer vers `/`. Lien "Déjà un compte" → `/auth/login`.
   **Ref :** `08-ui-component-blueprint.md §2.2` · `06-ux-flow.md §2 Acte 1`
 
-- [ ] **Ticket 6.8 — Page index.vue (redirect guard)**
+- [x] **Ticket 6.8 — Page index.vue (redirect guard)**
   Créer `pages/index.vue`. `onMounted` : si non authentifié → `/auth/login`. Si authentifié → charger workspaces → naviguer vers `/workspace/${workspaces[0].id}`.
   **Ref :** `08-ui-component-blueprint.md §2.4`
 
