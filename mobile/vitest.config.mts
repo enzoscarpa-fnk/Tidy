@@ -10,7 +10,9 @@ export default defineVitestConfig({
       },
     },
     include: ['tests/**/*.{test,nuxt.test}.ts'],
-    tsconfig: './tests/tsconfig.json',
+    typecheck: {
+      tsconfig: './tests/tsconfig.json',
+    },
   },
   resolve: {
     alias: {
