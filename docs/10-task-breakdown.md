@@ -301,39 +301,39 @@
 
 > **Objectif** : Dashboard opérationnel avec liste de documents, polling statut, états vide/chargement/erreur.
 
-- [ ] **Ticket 7.1 — useWorkspaceStore (Pinia)**
+- [x] **Ticket 7.1 — useWorkspaceStore (Pinia)**
   Créer `stores/workspace.store.ts`. State : `workspaces[]`, `currentWorkspaceId`. Actions : `fetchWorkspaces()`, `createWorkspace(name, description)`, `updateWorkspace(id, data)`, `setCurrentWorkspace(id)`. Appels via `$tidyApi`.
   **Ref :** `08-ui-component-blueprint.md §3.2 WorkspaceSelector`
 
-- [ ] **Ticket 7.2 — Middleware workspace.ts**
+- [x] **Ticket 7.2 — Middleware workspace.ts**
   Créer `middleware/workspace.ts`. Vérifier que `workspaceId` de l'URL appartient au user (via `useWorkspaceStore`). Sinon → naviguer vers `/`.
   **Ref :** `08-ui-component-blueprint.md §2.3`
 
-- [ ] **Ticket 7.3 — WorkspaceSelector.vue (Smart)**
+- [x] **Ticket 7.3 — WorkspaceSelector.vue (Smart)**
   Créer `components/WorkspaceSelector.vue`. Afficher la liste des workspaces (dropdown ou modal bottom sheet). Naviguer directement via `useRouter` au changement. Option "Nouveau workspace" → modal de création.
   **Ref :** `08-ui-component-blueprint.md §3.2`
 
-- [ ] **Ticket 7.4 — Composants Dumb : DocumentStatusBadge + TagChip**
+- [x] **Ticket 7.4 — Composants Dumb : DocumentStatusBadge + TagChip**
   Créer `components/DocumentStatusBadge.vue` : mapping `ProcessingStatus` → label UX + couleur Tailwind (table de mapping exacte du blueprint). Créer `components/TagChip.vue` : props `label`, `variant: 'user' | 'suggested'`, `removable`, event `remove`.
   **Ref :** `08-ui-component-blueprint.md §3.3`
 
-- [ ] **Ticket 7.5 — Composant Dumb : ThumbnailPreview + DocumentCard**
+- [x] **Ticket 7.5 — Composant Dumb : ThumbnailPreview + DocumentCard**
   Créer `components/ThumbnailPreview.vue` : afficher l'image si `thumbnailUrl` non null, sinon icône fallback selon `mimeType`. Créer `components/DocumentCard.vue` : props `document: DocumentListItem`, émet `click`. Composer avec ThumbnailPreview + DocumentStatusBadge + TagChip.
   **Ref :** `08-ui-component-blueprint.md §3.3`
 
-- [ ] **Ticket 7.6 — Composants Dumb : SkeletonLoader + EmptyState + ErrorState**
+- [x] **Ticket 7.6 — Composants Dumb : SkeletonLoader + EmptyState + ErrorState**
   Créer `components/SkeletonLoader.vue` (props : variant, count). Créer `components/EmptyState.vue` (props : context, query) + event `primaryAction`. Créer `components/ErrorState.vue` (props : context, retryable) + event `retry`.
   **Ref :** `08-ui-component-blueprint.md §3.3` · `06-ux-flow.md §3.1`
 
-- [ ] **Ticket 7.7 — useDocumentStore (Pinia) — partie liste**
+- [x] **Ticket 7.7 — useDocumentStore (Pinia) — partie liste**
   Créer `stores/document.store.ts`. State : `documents[]`, `isLoading`, `error`, `pollingInterval`. Actions : `fetchDocuments(workspaceId, filters)`, `startPolling(workspaceId)` (setInterval 5s si docs en traitement), `stopPolling()`.
   **Ref :** `08-ui-component-blueprint.md §3.2 DocumentList` · `06-ux-flow.md §5`
 
-- [ ] **Ticket 7.8 — DocumentList.vue (Smart) + polling**
+- [x] **Ticket 7.8 — DocumentList.vue (Smart) + polling**
   Créer `components/DocumentList.vue`. `onMounted` : fetch documents + démarrer polling si needed. `onUnmounted` : arrêter polling. Gérer les 3 états visuels : loading (SkeletonLoader) / empty (EmptyState) / error (ErrorState). Infinite scroll avec `useIntersectionObserver` (pagination page + 1 au scroll).
   **Ref :** `08-ui-component-blueprint.md §3.2` · `06-ux-flow.md §5`
 
-- [ ] **Ticket 7.9 — Page Dashboard /workspace/[workspaceId]/index.vue**
+- [x] **Ticket 7.9 — Page Dashboard /workspace/[workspaceId]/index.vue**
   Créer `pages/workspace/[workspaceId]/index.vue`. Layout : SearchBar en header, WorkspaceSelector, DocumentList. Bouton FAB "Ajouter un document" → naviguer vers `/workspace/:id/upload`. Bouton discret "Actualiser" → `documentStore.fetchDocuments()`.
   **Ref :** `06-ux-flow.md §3.1` · `08-ui-component-blueprint.md §2.2`
 

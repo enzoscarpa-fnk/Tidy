@@ -105,7 +105,7 @@ export const uploadUrlBodySchema = {
 
 /**
  * `q`            : terme(s) de recherche — obligatoire, min 1 char
- * `workspaceId`  : obligatoire — scope de la recherche
+ * `[workspaceId]`  : obligatoire — scope de la recherche
  * `detectedType` : filtre optionnel, valeurs séparées par virgule
  * `userTags`     : filtre optionnel, valeurs séparées par virgule
  * `page` / `limit` : pagination standard

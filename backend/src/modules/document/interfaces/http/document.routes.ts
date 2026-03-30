@@ -284,7 +284,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       if (!workspaceId) {
-        throw new AppError('VALIDATION_ERROR', 'Le champ workspaceId est requis.');
+        throw new AppError('VALIDATION_ERROR', 'Le champ [workspaceId] est requis.');
       }
 
       await workspaceService.findById(workspaceId, request.user.sub);
@@ -461,7 +461,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
       const q = request.query;
 
       if (!q.workspaceId) {
-        throw new AppError('VALIDATION_ERROR', 'Le paramètre workspaceId est requis.');
+        throw new AppError('VALIDATION_ERROR', 'Le paramètre [workspaceId] est requis.');
       }
 
       await workspaceService.findById(q.workspaceId, request.user.sub);

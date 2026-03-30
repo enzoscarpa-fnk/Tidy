@@ -944,7 +944,7 @@ export const useDocumentStore = defineStore('document', () => {
 ### Cycle de vie du polling dans les pages (mis à jour)
 
 ```typescript
-// pages/workspace/[workspaceId]/index.vue (Dashboard)
+// pages/workspace/[[workspaceId]]/index.vue (Dashboard)
 onMounted(async () => {
   // 1. Chargement instantané depuis SQLite (offline-ready dès ce point)
   await documentStore.loadDocuments(workspaceId)
@@ -983,7 +983,7 @@ export const useSearchStore = defineStore('search', () => {
 
   // Actions
   async function search(workspaceId: string): Promise<void>
-    // GET /api/v1/documents?workspaceId=...&query=...&detectedType=...&userTags=...
+    // GET /api/v1/documents?[workspaceId]=...&query=...&detectedType=...&userTags=...
     // Déclenché uniquement à la soumission (pas de debounce live — UX Flow §6)
 
   function clearFilters(): void

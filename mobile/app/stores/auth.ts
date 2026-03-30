@@ -1,4 +1,4 @@
-import type { ApiResponse, AuthResponse, AuthTokens, User } from '~/app/types/api'
+import type { ApiResponse, AuthRegisterResponse, AuthResponse, AuthRefreshResponse, User } from '~/types/api'
 
 const ACCESS_TOKEN_KEY = 'tidy_access_token'
 const REFRESH_TOKEN_KEY = 'tidy_refresh_token'
@@ -76,7 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (!res.data) {
         throw new Error(res.error?.message ?? 'Erreur de connexion')
       }
-      await _persistTokens(res.data.accessToken, res.data.refreshToken)
+      await _persistTokens(res.data.tokens.accessToken, res.data.tokens.refreshToken)
       user.value = res.data.user
     } catch (err: unknown) {
       const fetchErr = err as { data?: ApiResponse<null> }
@@ -96,7 +96,7 @@ export const useAuthStore = defineStore('auth', () => {
     isLoading.value = true
     error.value = null
     try {
-      const res = await $fetch<ApiResponse<AuthResponse>>('/auth/register', {
+      const res = await $fetch<ApiResponse<AuthRegisterResponse>>('/auth/register', {
         baseURL,
         method: 'POST',
         body: { email, password, displayName },
@@ -104,7 +104,7 @@ export const useAuthStore = defineStore('auth', () => {
       if (!res.data) {
         throw new Error(res.error?.message ?? 'Erreur lors de la création du compte')
       }
-      await _persistTokens(res.data.accessToken, res.data.refreshToken)
+      await _persistTokens(res.data.tokens.accessToken, res.data.tokens.refreshToken)
       user.value = res.data.user
     } catch (err: unknown) {
       const fetchErr = err as { data?: ApiResponse<null> }
@@ -123,13 +123,13 @@ export const useAuthStore = defineStore('auth', () => {
       return
     }
     try {
-      const res = await $fetch<ApiResponse<AuthTokens>>('/auth/refresh', {
+      const res = await $fetch<ApiResponse<AuthRefreshResponse>>('/auth/refresh', {
         baseURL,
         method: 'POST',
         body: { refreshToken: currentRt },
       })
       if (!res.data) throw new Error('Refresh token invalide')
-      await _persistTokens(res.data.accessToken, res.data.refreshToken)
+      await _persistTokens(res.data.tokens.accessToken, res.data.tokens.refreshToken)
     } catch {
       await logout()
       await navigateTo('/auth/login')
