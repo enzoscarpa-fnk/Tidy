@@ -345,35 +345,35 @@
 
 > **Objectif** : flux d'upload complet, vue détail avec sections IA/user séparées, édition métadonnées, retry.
 
-- [ ] **Ticket 8.1 — UploadProgressBar.vue (Dumb)**
+- [x] **Ticket 8.1 — UploadProgressBar.vue (Dumb)**
   Créer `components/UploadProgressBar.vue`. Props : `progress (0-100)`, `filename`, `status: 'uploading' | 'success' | 'error'`, `errorMessage`. Event `retry`. Ce composant n'existe QUE dans `/upload` — jamais dans la liste Dashboard.
   **Ref :** `08-ui-component-blueprint.md §3.3` · `06-ux-flow.md §3.2 règle critique`
 
-- [ ] **Ticket 8.2 — UploadDropzone.vue (Smart) + page /upload**
+- [x] **Ticket 8.2 — UploadDropzone.vue (Smart) + page /upload**
   Créer `components/UploadDropzone.vue`. Valider MIME (pdf/jpeg/png) + taille (≤ 50 Mo) côté client. Appeler `documentStore.uploadDocument()` avec `XMLHttpRequest` (pour le progress). Afficher UploadProgressBar. En succès → naviguer vers `/workspace/:id`. Créer `pages/workspace/[workspaceId]/upload.vue`.
   **Ref :** `08-ui-component-blueprint.md §3.2` · `06-ux-flow.md §3.2`
 
-- [ ] **Ticket 8.3 — useDocumentStore — actions document unique**
+- [x] **Ticket 8.3 — useDocumentStore — actions document unique**
   Étendre `document.store.ts`. Ajouter : `fetchDocument(id)`, `updateDocument(id, metadata)`, `archiveDocument(id)`, `reprocessDocument(id)`, `deleteDocument(id)`, `uploadDocument(workspaceId, file)`. State : `currentDocument`.
   **Ref :** `08-ui-component-blueprint.md §3.2 DocumentDetail`
 
-- [ ] **Ticket 8.4 — Composants Dumb : IntelligenceSection + UserMetadataSection**
+- [x] **Ticket 8.4 — Composants Dumb : IntelligenceSection + UserMetadataSection**
   Créer `components/IntelligenceSection.vue` : READ ONLY, afficher `detectedType` + entités extraites + `suggestedTags`. Event `addSuggestedTag`, `requestTypeOverride`. Afficher "Détection incertaine" si `globalConfidenceScore < 0.6`. Créer `components/UserMetadataSection.vue` : éditée selon prop `editMode`, events `addTag`, `removeTag`, `updateNotes`.
   **Ref :** `08-ui-component-blueprint.md §3.3` · `06-ux-flow.md §3.3`
 
-- [ ] **Ticket 8.5 — TypeOverrideDropdown.vue + TagChip actions**
+- [x] **Ticket 8.5 — TypeOverrideDropdown.vue + TagChip actions**
   Créer `components/TypeOverrideDropdown.vue` : dropdown avec les 6 types, labels UX (jamais les valeurs enum brutes). Event `override`. Étendre `TagChip.vue` si nécessaire pour le bouton "Ajouter à mes tags" depuis `IntelligenceSection`.
   **Ref :** `08-ui-component-blueprint.md §3.3`
 
-- [ ] **Ticket 8.6 — DocumentDetail.vue (Smart)**
+- [x] **Ticket 8.6 — DocumentDetail.vue (Smart)**
   Créer `components/DocumentDetail.vue`. `onMounted` : `fetchDocument(id)`. Composer IntelligenceSection + UserMetadataSection + thumbnail + titre inline-edit + bouton Archiver + lien Modifier + bouton Télécharger (presigned URL). Gérer l'état FAILED (afficher FailedDocumentActions).
   **Ref :** `08-ui-component-blueprint.md §3.2` · `06-ux-flow.md §3.3`
 
-- [ ] **Ticket 8.7 — FailedDocumentActions.vue + page /document/[id]**
+- [x] **Ticket 8.7 — FailedDocumentActions.vue + page /document/[id]**
   Créer `components/FailedDocumentActions.vue` : bouton "Relancer l'analyse" → `reprocessDocument()`, lien "Ignorer". Créer `pages/workspace/[workspaceId]/document/[documentId]/index.vue` utilisant `DocumentDetail`.
   **Ref :** `08-ui-component-blueprint.md §3.3` · `06-ux-flow.md §3.6`
 
-- [ ] **Ticket 8.8 — Page /document/[id]/edit.vue**
+- [x] **Ticket 8.8 — Page /document/[id]/edit.vue**
   Créer `pages/workspace/[workspaceId]/document/[documentId]/edit.vue`. Formulaire : titre, tags personnels (TagChip + input), notes, TypeOverrideDropdown. Appeler `documentStore.updateDocument()`. Toast discret "Modifications enregistrées" en succès. Bouton Annuler → retour.
   **Ref :** `06-ux-flow.md §3.5` · `07-api-contract.md §3 PATCH /documents/:id`
 
