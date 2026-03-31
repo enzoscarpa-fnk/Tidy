@@ -1,4 +1,12 @@
-import type { DocumentListItem, ProcessingStatus } from '~/types/api'
+import type {
+  DocumentDetail,
+  DocumentIntelligence,
+  DocumentListItem,
+  DocumentMetadata,
+  ProcessingStatus,
+} from '~/types/api'
+
+// ── Factories ───────────────────────────────────────────────────
 
 export function makeDocument(
   overrides: Partial<DocumentListItem> = {}
@@ -22,4 +30,59 @@ export function makeDocument(
 
 export function makeDocumentWithStatus(status: ProcessingStatus): DocumentListItem {
   return makeDocument({ processingStatus: status })
+}
+
+export function makeDocumentIntelligence(
+  overrides: Partial<DocumentIntelligence> = {}
+): DocumentIntelligence {
+  return {
+    detectedType: 'INVOICE',
+    suggestedTags: ['Adobe', 'Logiciel'],
+    globalConfidenceScore: 0.92,
+    extractedEntities: [
+      { entityType: 'AMOUNT', value: '59,99 €', confidence: 0.95 },
+      { entityType: 'DATE',   value: '12/01/2026', confidence: 0.98 },
+    ],
+    ...overrides,
+  }
+}
+
+export function makeDocumentMetadata(
+  overrides: Partial<DocumentMetadata> = {}
+): DocumentMetadata {
+  return {
+    userTags: [],
+    notes: null,
+    userOverrideType: null,
+    lastEditedAt: null,
+    ...overrides,
+  }
+}
+
+export function makeDocumentDetail(
+  overrides: Partial<DocumentDetail> = {}
+): DocumentDetail {
+  return {
+    ...makeDocument(),
+    uploadedBy: 'user-123',
+    pageCount: 2,
+    textExtractionMethod: 'NATIVE_PDF',
+    extractedText: 'Contenu extrait du document PDF.',
+    downloadUrl: 'https://s3.example.com/presigned-url',
+    processingEvents: [],
+    ...overrides,
+  }
+}
+
+/**
+ * Crée un File avec une taille simulée (sans allouer réellement N Mo en mémoire).
+ */
+export function makeFile(
+  name: string,
+  mimeType: string,
+  sizeBytes: number
+): File {
+  const file = new File(['x'], name, { type: mimeType })
+  Object.defineProperty(file, 'size', { value: sizeBytes, configurable: true })
+  return file
 }
