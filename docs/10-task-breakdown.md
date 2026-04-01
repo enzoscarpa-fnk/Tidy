@@ -385,19 +385,19 @@
 
 > **Objectif** : recherche full-text opérationnelle avec filtres, résultats depuis l'API (pas de live search en MVP).
 
-- [ ] **Ticket 9.1 — useSearchStore (Pinia)**
+- [x] **Ticket 9.1 — useSearchStore (Pinia)**
   Créer `stores/search.store.ts`. State : `query`, `results[]`, `filters: SearchFilters`, `isLoading`. Actions : `search(workspaceId, query, filters)` → appel `GET /documents/search`. `clearSearch()`. `setFilter(key, value)`.
   **Ref :** `08-ui-component-blueprint.md §3.2 SearchResults`
 
-- [ ] **Ticket 9.2 — SearchBar.vue (Dumb) + intégration header**
+- [x] **Ticket 9.2 — SearchBar.vue (Dumb) + intégration header**
   Créer `components/SearchBar.vue`. Input texte + icône loupe. Déclencher event `search` à la soumission (Enter ou clic loupe) — PAS en live. Event `clear`. Intégrer dans le layout du Dashboard et de la page search.
   **Ref :** `08-ui-component-blueprint.md §3.3` · `06-ux-flow.md §6`
 
-- [ ] **Ticket 9.3 — TagFilterBar.vue (Dumb)**
+- [x] **Ticket 9.3 — TagFilterBar.vue (Dumb)**
   Créer `components/TagFilterBar.vue`. Afficher chips : types (INVOICE, CONTRACT…), tags personnels, plage date. Filtres cumulables. Bouton "Effacer les filtres". Event `filterChange`, `clearAll`.
   **Ref :** `08-ui-component-blueprint.md §3.3` · `06-ux-flow.md §6`
 
-- [ ] **Ticket 9.4 — SearchResults.vue (Smart) + page /search**
+- [x] **Ticket 9.4 — SearchResults.vue (Smart) + page /search**
   Créer `components/SearchResults.vue`. Afficher `useSearchStore.results` avec surlignage des termes (`ts_headline` retourné par l'API). Intégrer TagFilterBar. Gérer état vide + erreur. Créer `pages/workspace/[workspaceId]/search.vue`.
   **Ref :** `08-ui-component-blueprint.md §3.2` · `06-ux-flow.md §3.4`
 

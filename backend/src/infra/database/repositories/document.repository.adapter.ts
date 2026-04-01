@@ -186,7 +186,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
 
     if (filters.query) {
       conditions.push(
-        Prisma.sql`d."searchVector" @@ plainto_tsquery('french', ${filters.query})`,
+        Prisma.sql`d."search_vector" @@ websearch_to_tsquery('simple', ${filters.query})`,
       );
     }
 
@@ -203,7 +203,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const sortDir = Prisma.raw(filters.sortOrder === 'asc' ? 'ASC' : 'DESC');
 
     const orderBy = filters.query
-      ? Prisma.sql`ts_rank(d."searchVector", plainto_tsquery('french', ${filters.query})) DESC`
+      ? Prisma.sql`ts_rank(d."search_vector", websearch_to_tsquery('simple', ${filters.query})) DESC`
       : Prisma.sql`d.${sortCol} ${sortDir}`;
 
     const [rows, countRows] = await Promise.all([
@@ -366,7 +366,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
   // ── Recherche FTS PostgreSQL ──────────────────────────────────────────────
 
   /**
-   * Recherche full-text via `searchVector @@ plainto_tsquery('french', query)`.
+   * Recherche full-text via `search_vector @@ websearch_to_tsquery('simple', query)`.
    *
    * - `ts_headline` génère un extrait avec termes surlignés (<mark>…</mark>).
    *   La source est `extractedText` en priorité, sinon `title`.
@@ -384,7 +384,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const conditions: Prisma.Sql[] = [
       Prisma.sql`d."workspaceId" = ${filters.workspaceId}::uuid`,
       Prisma.sql`d."isDeleted"   = false`,
-      Prisma.sql`d."searchVector" @@ plainto_tsquery('french', ${filters.query})`,
+      Prisma.sql`d."search_vector" @@ websearch_to_tsquery('simple', ${filters.query})`,
     ];
 
     if (filters.detectedType?.length) {
@@ -404,12 +404,12 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
         SELECT
           d.*,
           ts_headline(
-            'french',
+            'simple',
             COALESCE(NULLIF(d."extractedText", ''), d.title, ''),
-            plainto_tsquery('french', ${filters.query}),
-            'MaxWords=35, MinWords=15, StartSel=<mark>, StopSel=</mark>, HighlightAll=false'
+            websearch_to_tsquery('simple', ${filters.query}),
+            'MaxWords=35, MinWords=15, StartSel=<b>, StopSel=</b>, HighlightAll=false'
           )                                                                          AS headline,
-          ts_rank(d."searchVector", plainto_tsquery('french', ${filters.query}))    AS rank
+          ts_rank(d."search_vector", websearch_to_tsquery('simple', ${filters.query}))    AS rank
         FROM   "documents" d
         WHERE  ${where}
         ORDER  BY rank DESC

@@ -418,6 +418,11 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
       // Vérification ownership du workspace
       await workspaceService.findById(workspaceId, request.user.sub);
 
+      const trimmedQuery = q?.trim() ?? '';
+      if (!trimmedQuery) {
+        return reply.send(createPaginatedResponse([], 0, 1, 20));
+      }
+
       const parsedPage  = Math.max(1, parseInt(page  ?? '1',  10) || 1);
       const parsedLimit = Math.min(100, Math.max(1, parseInt(limit ?? '20', 10) || 20));
 
@@ -431,7 +436,7 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
 
       const { items, total } = await documentRepo.search({
         workspaceId,
-        query:                     q.trim(),
+        query: trimmedQuery,
         ...(detectedTypeFilter && { detectedType: detectedTypeFilter }),
         ...(userTagsFilter     && { userTags:     userTagsFilter }),
         page:  parsedPage,

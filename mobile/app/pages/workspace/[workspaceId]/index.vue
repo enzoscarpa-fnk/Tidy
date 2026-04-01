@@ -1,8 +1,5 @@
 <script setup lang="ts">
-import type { DocumentFilters } from '~/types/api'
-
 // ── Middleware & Meta ──────────────────────────────────────────────────────
-// Le middleware 'workspace' vérifie l'ownership et synchro currentWorkspaceId
 definePageMeta({
   middleware: ['workspace'],
 })
@@ -14,27 +11,7 @@ const route = useRoute()
 const router = useRouter()
 
 // ── Workspace courant ──────────────────────────────────────────────────────
-// [workspaceId] est garanti string par le middleware (ownership vérifié)
 const workspaceId = computed(() => route.params.workspaceId as string)
-
-// ── Filtres actifs (transmis à DocumentList) ───────────────────────────────
-// NOTE Phase 7 : seul le filtre `query` est géré ici via le champ de recherche
-// inline. En Phase 9, ce bloc sera remplacé par <SearchBar> + useSearchStore.
-const activeFilters = ref<DocumentFilters>({})
-
-// ── Recherche inline (sera remplacé par SearchBar.vue en Phase 9) ──────────
-const searchInput = ref('')
-
-function handleSearch(): void {
-  const q = searchInput.value.trim()
-  // UX Flow §6 : déclencher à la soumission uniquement — jamais en live
-  activeFilters.value = q ? { query: q } : {}
-}
-
-function clearSearch(): void {
-  searchInput.value = ''
-  activeFilters.value = {}
-}
 
 // ── Actions de la page ─────────────────────────────────────────────────────
 function navigateToUpload(): void {
@@ -42,18 +19,20 @@ function navigateToUpload(): void {
 }
 
 async function handleRefresh(): Promise<void> {
-  await documentStore.fetchDocuments(workspaceId.value, activeFilters.value)
+  await documentStore.fetchDocuments(workspaceId.value)
   if (documentStore.hasDocumentsPending) {
-    documentStore.startPolling(workspaceId.value, activeFilters.value)
+    documentStore.startPolling(workspaceId.value)
   }
 }
 
-// ── Reset filtres au changement de workspace ───────────────────────────────
-// (ex : navigation via WorkspaceSelector)
-watch(workspaceId, () => {
-  searchInput.value = ''
-  activeFilters.value = {}
-})
+// ── SearchBar navigue vers /search ──────────────────────────────
+// La recherche quitte le Dashboard et délègue à useSearchStore + SearchResults.
+function handleSearch(query: string): void {
+  router.push({
+    path: `/workspace/${workspaceId.value}/search`,
+    query: { query },
+  })
+}
 </script>
 
 <template>
@@ -66,58 +45,13 @@ watch(workspaceId, () => {
         <!-- Sélecteur de workspace -->
         <WorkspaceSelector class="flex-shrink-0" />
 
-        <!-- Barre de recherche inline (Phase 9 → sera <SearchBar />) -->
-        <div class="relative flex-1">
-          <label for="dashboard-search" class="sr-only">
-            Rechercher un document
-          </label>
-          <div class="relative">
-            <!-- Icône loupe -->
-            <svg
-              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-tidy-text-tertiary"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                fill-rule="evenodd"
-                d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
-                clip-rule="evenodd"
-              />
-            </svg>
-
-            <input
-              id="dashboard-search"
-              v-model="searchInput"
-              type="search"
-              placeholder="Rechercher un document…"
-              autocomplete="off"
-              class="w-full rounded-lg border border-tidy-border bg-tidy-surface py-2 pl-9 pr-9 text-sm text-tidy-text-primary placeholder:text-tidy-text-tertiary transition-colors focus:border-tidy-primary focus:outline-none focus:ring-2 focus:ring-tidy-primary/20"
-              @keydown.enter.prevent="handleSearch"
-              @keydown.escape="clearSearch"
-            />
-
-            <!-- Bouton effacer (visible uniquement si query non vide) -->
-            <button
-              v-if="searchInput"
-              type="button"
-              class="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-tidy-text-tertiary transition-colors hover:text-tidy-text-primary"
-              aria-label="Effacer la recherche"
-              @click="clearSearch"
-            >
-              <svg
-                class="h-4 w-4"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
+        <!-- SearchBar -->
+        <!-- La soumission navigue vers /search?query=... (jamais de live search) -->
+        <SearchBar
+          class="flex-1"
+          placeholder="Rechercher un document…"
+          @search="handleSearch"
+        />
 
         <!-- Bouton Actualiser — discret, icône seule -->
         <button
@@ -143,45 +77,6 @@ watch(workspaceId, () => {
           </svg>
         </button>
       </div>
-
-      <!-- Indicateur de recherche active -->
-      <Transition
-        enter-active-class="transition duration-200 ease-out"
-        enter-from-class="opacity-0 -translate-y-1"
-        enter-to-class="opacity-100 translate-y-0"
-        leave-active-class="transition duration-150 ease-in"
-        leave-from-class="opacity-100 translate-y-0"
-        leave-to-class="opacity-0 -translate-y-1"
-      >
-        <div
-          v-if="activeFilters.query"
-          class="flex items-center gap-2 border-t border-tidy-border bg-tidy-primary/5 px-4 py-2"
-        >
-          <svg
-            class="h-3.5 w-3.5 flex-shrink-0 text-tidy-primary"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
-              clip-rule="evenodd"
-            />
-          </svg>
-          <p class="text-xs text-tidy-primary">
-            Résultats pour
-            <span class="font-semibold">« {{ activeFilters.query }} »</span>
-          </p>
-          <button
-            type="button"
-            class="ml-auto text-xs font-medium text-tidy-primary underline-offset-2 hover:underline"
-            @click="clearSearch"
-          >
-            Effacer
-          </button>
-        </div>
-      </Transition>
     </header>
 
     <!-- ── Contenu principal ───────────────────────────────────────────── -->
@@ -205,11 +100,8 @@ watch(workspaceId, () => {
         </div>
       </div>
 
-      <!-- Liste des documents (Smart Component — gère son propre cycle de vie) -->
-      <DocumentList
-        :workspace-id="workspaceId"
-        :filters="activeFilters"
-      />
+      <!-- Liste des documents — affiche TOUS les docs du workspace (pas de filtre search ici) -->
+      <DocumentList :workspace-id="workspaceId" />
 
     </main>
 

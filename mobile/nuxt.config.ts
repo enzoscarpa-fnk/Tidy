@@ -46,5 +46,16 @@ export default defineNuxtConfig({
     autoImport: true,
   },
 
+  vite: {
+    server: {
+      hmr: {
+        protocol: 'ws',
+        host: 'localhost',
+        port: 3001,
+        clientPort: 3001,
+      },
+    },
+  },
+
   devtools: { enabled: false },
 })
