@@ -133,6 +133,8 @@ export class ProcessingPipelineOrchestrator {
       this.deps.eventBus.publish(new DocumentReadyEvent(documentId));
 
     } catch (err: unknown) {
+      console.error('[Pipeline] FAILED for document', documentId, err);
+      
       const errorMessage =
         err instanceof Error ? err.message : 'Erreur inconnue dans le pipeline OCR.';
 

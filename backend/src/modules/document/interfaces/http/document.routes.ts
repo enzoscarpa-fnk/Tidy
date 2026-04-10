@@ -122,17 +122,31 @@ function toListDto(doc: Document) {
     fileSizeBytes:    doc.fileSizeBytes,
     processingStatus: doc.processingStatus,
     title:            doc.metadata.title,
-    userTags:         [...doc.metadata.userTags],
-    thumbnailRef:     doc.thumbnailRef,
-    detectedType:     doc.intelligence?.detectedType ?? null,
-    uploadedAt:       doc.uploadedAt.toISOString(),
-    updatedAt:        doc.updatedAt.toISOString(),
+    thumbnailUrl:     doc.thumbnailRef ?? null,
+    intelligence: doc.intelligence
+      ? {
+        detectedType:          doc.intelligence.detectedType,
+        globalConfidenceScore: doc.intelligence.globalConfidenceScore,
+        suggestedTags:         [...doc.intelligence.suggestedTags],
+        extractedEntities:     doc.intelligence.extractedEntities,
+      }
+      : null,
+    metadata: {
+      userTags:         [...doc.metadata.userTags],
+      notes:            doc.metadata.notes ?? null,
+      userOverrideType: doc.intelligence?.detectedType ?? null,
+      lastEditedAt:     doc.metadata.lastEditedAt?.toISOString() ?? null,
+    },
+    uploadedAt: doc.uploadedAt.toISOString(),
+    updatedAt:  doc.updatedAt.toISOString(),
   };
 }
 
 function toSyncDto(doc: Document) {
   return {
     ...toListDto(doc),
+    // Champs LWW spécifiques au sync — userTags aussi à plat pour compatibilité client SQLite
+    userTags:             [...doc.metadata.userTags],
     isDeleted:            doc.isDeleted,
     notes:                doc.metadata.notes,
     pageCount:            doc.pageCount,
@@ -178,13 +192,12 @@ function toDetailDto(
 ) {
   return {
     ...toListDto(doc),
-    uploadedById:         doc.uploadedById,
-    notes:                doc.metadata.notes,
+    uploadedBy:         doc.uploadedById,
     pageCount:            doc.pageCount,
     s3Key:                doc.s3Key,
     extractedText:        doc.extractedText,
     textExtractionMethod: doc.textExtractionMethod,
-    downloadUrl,
+    downloadUrl:          downloadUrl ?? '',
     intelligence: doc.intelligence
       ? {
         detectedType:          doc.intelligence.detectedType,
@@ -194,11 +207,10 @@ function toDetailDto(
       }
       : null,
     processingEvents: processingEvents.map((e) => ({
-      id:           e.id,
+      eventId:      e.id,
       eventType:    e.eventType,
       isSuccess:    e.isSuccess,
       errorMessage: e.errorMessage,
-      payload:      e.payload,
       occurredAt:   e.occurredAt.toISOString(),
     })),
   };

@@ -80,10 +80,6 @@ export const useSearchStore = defineStore('search', () => {
         params.set('userTags', filters.value.tags.join(','))
       }
 
-      const { dateFrom, dateTo } = _resolveDateRange(filters.value.dateRange)
-      if (dateFrom) params.set('dateFrom', dateFrom)
-      if (dateTo) params.set('dateTo', dateTo)
-
       const res = await request<ApiResponse<SearchResultItem[]>>(
         `/documents/search?${params.toString()}`
       )

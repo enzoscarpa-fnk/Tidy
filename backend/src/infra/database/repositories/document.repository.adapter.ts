@@ -25,11 +25,6 @@ import type { IntelligenceJson, DetectedType } from '../../../modules/document/d
 
 // ── Type interne pour les résultats FTS (d.* + headline + rank) ───────────────
 
-interface SearchRawRow extends PrismaDocument {
-  headline: string;
-  rank:     number;
-}
-
 export class DocumentRepositoryAdapter implements IDocumentRepository {
   constructor(private readonly prisma: PrismaClient) {
   }
