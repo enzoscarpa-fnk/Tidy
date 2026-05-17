@@ -138,11 +138,14 @@ model Document {
   processingEvents ProcessingEvent[]
   shareLinks       ShareLink[]
 
+  search_vector Unsupported("tsvector")?
+
   @@index([workspaceId, processingStatus])
   @@index([workspaceId, detectedType])
   @@index([workspaceId, uploadedAt(sort: Desc)])
   @@index([workspaceId, updatedAt(sort: Desc)])
   @@index([isDeleted, processingStatus])
+  @@index([workspaceId])
   @@map("documents")
 }
 

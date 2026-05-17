@@ -5,8 +5,7 @@ import type {
   DocumentMetadata,
   ProcessingStatus,
 } from '~/types/api'
-
-// ── Factories ───────────────────────────────────────────────────
+import type { SearchResultItem } from '~/stores/search'
 
 export function makeDocument(
   overrides: Partial<DocumentListItem> = {}
@@ -74,9 +73,6 @@ export function makeDocumentDetail(
   }
 }
 
-/**
- * Crée un File avec une taille simulée (sans allouer réellement N Mo en mémoire).
- */
 export function makeFile(
   name: string,
   mimeType: string,
@@ -85,4 +81,18 @@ export function makeFile(
   const file = new File(['x'], name, { type: mimeType })
   Object.defineProperty(file, 'size', { value: sizeBytes, configurable: true })
   return file
+}
+
+/**
+ * Crée un SearchResultItem — étend DocumentListItem avec le champ `headline`
+ * retourné par ts_headline (PostgreSQL FTS).
+ */
+export function makeSearchResultItem(
+  overrides: Partial<SearchResultItem> = {}
+): SearchResultItem {
+  return {
+    ...makeDocument(),
+    headline: null,
+    ...overrides,
+  }
 }

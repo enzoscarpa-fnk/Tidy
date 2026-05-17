@@ -50,7 +50,8 @@ describe('TextExtractorAdapter', () => {
 
       await adapter.extractFromPdf(FAKE_BUFFER);
 
-      expect(MockPDFParse).toHaveBeenCalledWith(FAKE_BUFFER);
+      const received = MockPDFParse.mock.calls[0][0] as Buffer | Uint8Array;
+      expect(Buffer.from(received as Uint8Array)).toEqual(FAKE_BUFFER);
     });
 
     it('should trim surrounding whitespace before returning text', async () => {

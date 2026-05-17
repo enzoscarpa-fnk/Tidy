@@ -25,13 +25,9 @@ import type { IntelligenceJson, DetectedType } from '../../../modules/document/d
 
 // ── Type interne pour les résultats FTS (d.* + headline + rank) ───────────────
 
-interface SearchRawRow extends PrismaDocument {
-  headline: string;
-  rank:     number;
-}
-
 export class DocumentRepositoryAdapter implements IDocumentRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaClient) {
+  }
 
   // ── Pivot Prisma → Domain ─────────────────────────────────────────────────
 
@@ -39,7 +35,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const metaJson = row.metadata as unknown as MetadataJson;
     const metadata = new DocumentMetadata(
       metaJson.title,
-      metaJson.userTags    ?? [],
+      metaJson.userTags ?? [],
       metaJson.notes,
       metaJson.lastEditedAt ? new Date(metaJson.lastEditedAt) : null,
     );
@@ -49,30 +45,30 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
       const intelJson = row.intelligence as unknown as IntelligenceJson;
       intelligence = new DocumentIntelligence(
         row.detectedType as DetectedType,
-        intelJson.extractedEntities    ?? [],
+        intelJson.extractedEntities ?? [],
         intelJson.globalConfidenceScore ?? 0,
-        intelJson.suggestedTags        ?? [],
+        intelJson.suggestedTags ?? [],
       );
     }
 
     return new Document({
-      id:                   row.id,
-      workspaceId:          row.workspaceId,
-      uploadedById:         row.uploadedById,
-      originalFilename:     row.originalFilename,
-      mimeType:             row.mimeType,
-      fileSizeBytes:        Number(row.fileSizeBytes),
-      pageCount:            row.pageCount,
-      s3Key:                row.s3Key,
-      thumbnailRef:         row.thumbnailRef,
-      processingStatus:     row.processingStatus as ProcessingStatus,
+      id: row.id,
+      workspaceId: row.workspaceId,
+      uploadedById: row.uploadedById,
+      originalFilename: row.originalFilename,
+      mimeType: row.mimeType,
+      fileSizeBytes: Number(row.fileSizeBytes),
+      pageCount: row.pageCount,
+      s3Key: row.s3Key,
+      thumbnailRef: row.thumbnailRef,
+      processingStatus: row.processingStatus as ProcessingStatus,
       textExtractionMethod: row.textExtractionMethod as TextExtractionMethod | null,
-      isDeleted:            row.isDeleted,
-      extractedText:        row.extractedText,
+      isDeleted: row.isDeleted,
+      extractedText: row.extractedText,
       metadata,
       intelligence,
-      uploadedAt:           row.uploadedAt,
-      updatedAt:            row.updatedAt,
+      uploadedAt: row.uploadedAt,
+      updatedAt: row.updatedAt,
     });
   }
 
@@ -83,19 +79,19 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
 
     const row = await this.prisma.document.create({
       data: {
-        id:               data.id,
-          workspace:        { connect: { id: data.workspaceId } },
-        uploadedBy:       { connect: { id: data.uploadedById } },
+        id: data.id,
+        workspace: {connect: {id: data.workspaceId}},
+        uploadedBy: {connect: {id: data.uploadedById}},
         originalFilename: data.originalFilename,
-          mimeType:         data.mimeType,
-        fileSizeBytes:    BigInt(data.fileSizeBytes),
+        mimeType: data.mimeType,
+        fileSizeBytes: BigInt(data.fileSizeBytes),
         processingStatus: PrismaProcessingStatus.UPLOADED,
-        isDeleted:        false,
+        isDeleted: false,
         title,
-        metadata:         DocumentMetadata.default(title).toJSON() as Prisma.InputJsonValue,
-        intelligence:     Prisma.JsonNull,
-        uploadedAt:       data.uploadedAt,
-        updatedAt:        data.uploadedAt,
+        metadata: DocumentMetadata.default(title).toJSON() as Prisma.InputJsonValue,
+        intelligence: Prisma.JsonNull,
+        uploadedAt: data.uploadedAt,
+        updatedAt: data.uploadedAt,
       },
     });
 
@@ -105,7 +101,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
   // ── Lecture simple ────────────────────────────────────────────────────────
 
   async findById(id: string): Promise<Document | null> {
-    const row = await this.prisma.document.findUnique({ where: { id } });
+    const row = await this.prisma.document.findUnique({where: {id}});
     return row ? this.toDomain(row) : null;
   }
 
@@ -115,7 +111,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     workspaceId: string,
     filters: DocumentFilters,
   ): Promise<{ items: Document[]; total: number }> {
-    const page  = Math.max(1, filters.page  ?? 1);
+    const page = Math.max(1, filters.page ?? 1);
     const limit = Math.min(100, Math.max(1, filters.limit ?? 30));
 
     if (filters.query || filters.userTags?.length) {
@@ -126,13 +122,13 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
       workspaceId,
       isDeleted: false,
       ...(filters.processingStatus?.length && {
-        processingStatus: { in: filters.processingStatus as PrismaProcessingStatus[] },
+        processingStatus: {in: filters.processingStatus as PrismaProcessingStatus[]},
       }),
       ...(filters.detectedType?.length && {
-        detectedType: { in: filters.detectedType as PrismaDetectedType[] },
+        detectedType: {in: filters.detectedType as PrismaDetectedType[]},
       }),
-      ...(filters.dateFrom && { uploadedAt: { gte: filters.dateFrom } }),
-      ...(filters.dateTo   && { uploadedAt: { lte: filters.dateTo   } }),
+      ...(filters.dateFrom && {uploadedAt: {gte: filters.dateFrom}}),
+      ...(filters.dateTo && {uploadedAt: {lte: filters.dateTo}}),
     };
 
     const orderBy: Prisma.DocumentOrderByWithRelationInput = {
@@ -146,10 +142,10 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
         skip: (page - 1) * limit,
         take: limit,
       }),
-      this.prisma.document.count({ where }),
+      this.prisma.document.count({where}),
     ]);
 
-    return { items: rows.map(this.toDomain.bind(this)), total };
+    return {items: rows.map(this.toDomain.bind(this)), total};
   }
 
   // ── Lecture liste — chemin raw SQL (FTS + userTags) ───────────────────────
@@ -186,7 +182,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
 
     if (filters.query) {
       conditions.push(
-        Prisma.sql`d."searchVector" @@ plainto_tsquery('french', ${filters.query})`,
+        Prisma.sql`d."search_vector" @@ websearch_to_tsquery('simple', ${filters.query})`,
       );
     }
 
@@ -203,22 +199,21 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const sortDir = Prisma.raw(filters.sortOrder === 'asc' ? 'ASC' : 'DESC');
 
     const orderBy = filters.query
-      ? Prisma.sql`ts_rank(d."searchVector", plainto_tsquery('french', ${filters.query})) DESC`
+      ? Prisma.sql`ts_rank(d."search_vector", websearch_to_tsquery('simple', ${filters.query})) DESC`
       : Prisma.sql`d.${sortCol} ${sortDir}`;
 
     const [rows, countRows] = await Promise.all([
       this.prisma.$queryRaw<PrismaDocument[]>`
         SELECT d.*
-        FROM   "documents" d
-        WHERE  ${where}
-        ORDER  BY ${orderBy}
-          LIMIT  ${limit}
+        FROM "documents" d
+        WHERE ${where}
+        ORDER BY ${orderBy} LIMIT ${limit}
         OFFSET ${offset}
       `,
       this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
-        FROM   "documents" d
-        WHERE  ${where}
+        FROM "documents" d
+        WHERE ${where}
       `,
     ]);
 
@@ -232,23 +227,23 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
 
   async update(id: string, data: UpdateDocumentData): Promise<Document> {
     const row = await this.prisma.document.update({
-      where: { id },
+      where: {id},
       data: {
-      ...(data.metadata && {
-        title:    data.metadata.title,
-        metadata: data.metadata.toJSON() as Prisma.InputJsonValue,
-      }),
-      ...(data.intelligence !== undefined && {
-        detectedType: (data.intelligence?.detectedType ?? null) as PrismaDetectedType | null,
-        intelligence: (data.intelligence?.toJSON() as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
-      }),
-      ...(data.s3Key                !== undefined && { s3Key:                data.s3Key }),
-      ...(data.thumbnailRef         !== undefined && { thumbnailRef:         data.thumbnailRef }),
-      ...(data.extractedText        !== undefined && { extractedText:        data.extractedText }),
-      ...(data.textExtractionMethod !== undefined && {
-        textExtractionMethod: data.textExtractionMethod as PrismaTextExtractionMethod | null,
-      }),
-      ...(data.pageCount !== undefined && { pageCount: data.pageCount }),
+        ...(data.metadata && {
+          title: data.metadata.title,
+          metadata: data.metadata.toJSON() as Prisma.InputJsonValue,
+        }),
+        ...(data.intelligence !== undefined && {
+          detectedType: (data.intelligence?.detectedType ?? null) as PrismaDetectedType | null,
+          intelligence: (data.intelligence?.toJSON() as Prisma.InputJsonValue | undefined) ?? Prisma.JsonNull,
+        }),
+        ...(data.s3Key !== undefined && {s3Key: data.s3Key}),
+        ...(data.thumbnailRef !== undefined && {thumbnailRef: data.thumbnailRef}),
+        ...(data.extractedText !== undefined && {extractedText: data.extractedText}),
+        ...(data.textExtractionMethod !== undefined && {
+          textExtractionMethod: data.textExtractionMethod as PrismaTextExtractionMethod | null,
+        }),
+        ...(data.pageCount !== undefined && {pageCount: data.pageCount}),
         updatedAt: data.updatedAt ?? new Date(),
       },
     });
@@ -258,8 +253,8 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
 
   async softDelete(id: string): Promise<void> {
     await this.prisma.document.update({
-      where: { id },
-      data: { isDeleted: true, updatedAt: new Date() },
+      where: {id},
+      data: {isDeleted: true, updatedAt: new Date()},
     });
   }
 
@@ -269,12 +264,12 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     textExtractionMethod?: TextExtractionMethod | null,
   ): Promise<void> {
     await this.prisma.document.update({
-      where: { id },
+      where: {id},
       data: {
         processingStatus: status as PrismaProcessingStatus,
-      ...(textExtractionMethod !== undefined && {
-        textExtractionMethod: textExtractionMethod as PrismaTextExtractionMethod | null,
-      }),
+        ...(textExtractionMethod !== undefined && {
+          textExtractionMethod: textExtractionMethod as PrismaTextExtractionMethod | null,
+        }),
         updatedAt: new Date(),
       },
     });
@@ -286,8 +281,8 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     return this.prisma.$transaction(async (tx) => {
 
       const existing = await tx.document.findUnique({
-        where:  { id: payload.id },
-        select: { updatedAt: true },
+        where: {id: payload.id},
+        select: {updatedAt: true},
       });
 
       if (!existing) {
@@ -300,21 +295,21 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
 
         await tx.document.create({
           data: {
-            id:               payload.id,
-              workspace:        { connect: { id: payload.workspaceId } },
-            uploadedBy:       { connect: { id: payload.uploadedById } },
+            id: payload.id,
+            workspace: {connect: {id: payload.workspaceId}},
+            uploadedBy: {connect: {id: payload.uploadedById}},
             originalFilename: payload.originalFilename,
-              mimeType:         payload.mimeType,
-            fileSizeBytes:    BigInt(payload.fileSizeBytes),
+            mimeType: payload.mimeType,
+            fileSizeBytes: BigInt(payload.fileSizeBytes),
             processingStatus: PrismaProcessingStatus.PENDING_UPLOAD,
-            isDeleted:        payload.isDeleted,
-            s3Key:            payload.s3Key,
-            title:            metadata.title,
-            metadata:         metadata.toJSON() as Prisma.InputJsonValue,
-            intelligence:     Prisma.JsonNull,
-            uploadedAt:       payload.clientCreatedAt,
-            updatedAt:        payload.clientUpdatedAt,
-            syncedAt:         new Date(),
+            isDeleted: payload.isDeleted,
+            s3Key: payload.s3Key,
+            title: metadata.title,
+            metadata: metadata.toJSON() as Prisma.InputJsonValue,
+            intelligence: Prisma.JsonNull,
+            uploadedAt: payload.clientCreatedAt,
+            updatedAt: payload.clientUpdatedAt,
+            syncedAt: new Date(),
           },
         });
 
@@ -333,15 +328,15 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
       );
 
       await tx.document.update({
-        where: { id: payload.id },
+        where: {id: payload.id},
         data: {
           originalFilename: payload.originalFilename,
-            isDeleted:        payload.isDeleted,
-          s3Key:            payload.s3Key,
-          title:            metadata.title,
-          metadata:         metadata.toJSON() as Prisma.InputJsonValue,
-          updatedAt:        payload.clientUpdatedAt,
-          syncedAt:         new Date(),
+          isDeleted: payload.isDeleted,
+          s3Key: payload.s3Key,
+          title: metadata.title,
+          metadata: metadata.toJSON() as Prisma.InputJsonValue,
+          updatedAt: payload.clientUpdatedAt,
+          syncedAt: new Date(),
         },
       });
 
@@ -355,9 +350,9 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const rows = await this.prisma.document.findMany({
       where: {
         workspaceId,
-        syncedAt: { gt: since },
+        syncedAt: {gt: since},
       },
-      orderBy: { syncedAt: 'asc' },
+      orderBy: {syncedAt: 'asc'},
     });
 
     return rows.map(this.toDomain.bind(this));
@@ -366,7 +361,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
   // ── Recherche FTS PostgreSQL ──────────────────────────────────────────────
 
   /**
-   * Recherche full-text via `searchVector @@ plainto_tsquery('french', query)`.
+   * Recherche full-text via `search_vector @@ websearch_to_tsquery('simple', query)`.
    *
    * - `ts_headline` génère un extrait avec termes surlignés (<mark>…</mark>).
    *   La source est `extractedText` en priorité, sinon `title`.
@@ -377,14 +372,14 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
   async search(
     filters: SearchFilters,
   ): Promise<{ items: SearchDocumentResult[]; total: number }> {
-    const page   = Math.max(1, filters.page  ?? 1);
-    const limit  = Math.min(100, Math.max(1, filters.limit ?? 20));
+    const page = Math.max(1, filters.page ?? 1);
+    const limit = Math.min(100, Math.max(1, filters.limit ?? 20));
     const offset = (page - 1) * limit;
 
     const conditions: Prisma.Sql[] = [
       Prisma.sql`d."workspaceId" = ${filters.workspaceId}::uuid`,
       Prisma.sql`d."isDeleted"   = false`,
-      Prisma.sql`d."searchVector" @@ plainto_tsquery('french', ${filters.query})`,
+      Prisma.sql`d."search_vector" @@ websearch_to_tsquery('simple', ${filters.query})`,
     ];
 
     if (filters.detectedType?.length) {
@@ -400,34 +395,77 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const where = Prisma.join(conditions, ' AND ');
 
     const [rows, countRows] = await Promise.all([
-      this.prisma.$queryRaw<SearchRawRow[]>`
-        SELECT
-          d.*,
-          ts_headline(
-            'french',
-            COALESCE(NULLIF(d."extractedText", ''), d.title, ''),
-            plainto_tsquery('french', ${filters.query}),
-            'MaxWords=35, MinWords=15, StartSel=<mark>, StopSel=</mark>, HighlightAll=false'
-          )                                                                          AS headline,
-          ts_rank(d."searchVector", plainto_tsquery('french', ${filters.query}))    AS rank
-        FROM   "documents" d
-        WHERE  ${where}
-        ORDER  BY rank DESC
-        LIMIT  ${limit}
+      this.prisma.$queryRaw<Array<{
+        id: string
+        workspaceId: string
+        uploadedById: string
+        originalFilename: string
+        mimeType: string
+        fileSizeBytes: bigint
+        pageCount: number | null
+        s3Key: string | null
+        thumbnailRef: string | null
+        processingStatus: string
+        textExtractionMethod: string | null
+        isDeleted: boolean
+        extractedText: string | null
+        title: string
+        metadata: Prisma.JsonValue
+        detectedType: string | null
+        intelligence: Prisma.JsonValue | null
+        uploadedAt: Date
+        updatedAt: Date
+        syncedAt: Date
+        headline: string
+        rank: number
+      }>>`
+        SELECT d."id",
+               d."workspaceId",
+               d."uploadedById",
+               d."originalFilename",
+               d."mimeType",
+               d."fileSizeBytes",
+               d."pageCount",
+               d."s3Key",
+               d."thumbnailRef",
+               d."processingStatus"::text AS "processingStatus", d."textExtractionMethod"::text AS "textExtractionMethod", d."isDeleted",
+               d."extractedText",
+               d."title",
+               d."metadata",
+               d."detectedType"::text AS "detectedType", d."intelligence",
+               d."uploadedAt",
+               d."updatedAt",
+               d."syncedAt",
+               ts_headline(
+                 'simple',
+                 COALESCE(NULLIF(d."extractedText", ''), d.title, ''),
+                 websearch_to_tsquery('simple', ${filters.query}),
+                 'MaxWords=35, MinWords=15, StartSel=<b>, StopSel=</b>, HighlightAll=false'
+               )                                                                            AS headline,
+               ts_rank(d."search_vector", websearch_to_tsquery('simple', ${filters.query})) AS rank
+        FROM "documents" d
+        WHERE ${where}
+        ORDER BY rank DESC
+          LIMIT ${limit}
         OFFSET ${offset}
       `,
       this.prisma.$queryRaw<[{ count: bigint }]>`
         SELECT COUNT(*) AS count
-        FROM   "documents" d
-        WHERE  ${where}
+        FROM "documents" d
+        WHERE ${where}
       `,
     ]);
 
     return {
       items: rows.map((row) => ({
-        document: this.toDomain(row),
+        document: this.toDomain({
+          ...row,
+          processingStatus: row.processingStatus as PrismaDocument['processingStatus'],
+          textExtractionMethod: row.textExtractionMethod as PrismaDocument['textExtractionMethod'],
+          detectedType: row.detectedType as PrismaDocument['detectedType'],
+        } as PrismaDocument),
         headline: row.headline ?? '',
-        rank:     Number(row.rank ?? 0),
+        rank: Number(row.rank ?? 0),
       })),
       total: Number(countRows[0]?.count ?? 0),
     };
