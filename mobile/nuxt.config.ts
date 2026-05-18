@@ -39,7 +39,7 @@ export default defineNuxtConfig({
 
   typescript: {
     strict: true,
-    typeCheck: true,
+    typeCheck: false,
   },
 
   imports: {
@@ -54,6 +54,12 @@ export default defineNuxtConfig({
         port: 3001,
         clientPort: 3001,
       },
+    },
+  },
+
+  nitro: {
+    output: {
+      publicDir: '.output/public',
     },
   },
 

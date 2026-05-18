@@ -409,31 +409,31 @@
 
 > **Objectif** : base SQLite chiffrée initialisée, migrations, CRUD local, FTS5 opérationnel. Prérequis au Sync Service.
 
-- [ ] **Ticket 10.1 — Setup Capacitor + plugins natifs**
+- [x] **Ticket 10.1 — Setup Capacitor + plugins natifs**
   Installer `@capacitor/core`, `@capacitor/cli`. Créer `capacitor.config.ts`. Installer les plugins : `@capawesome/capacitor-sqlite`, `@capacitor-community/secure-storage`, `@capacitor/filesystem`, `@capacitor/camera`, `@capacitor/network`, `@capacitor/share`, `@capacitor/app`. Synchroniser iOS et Android : `npx cap sync`.
   **Ref :** `03-technical-design-document.md §2.2`
 
-- [ ] **Ticket 10.2 — useSecureStorage composable**
+- [x] **Ticket 10.2 — useSecureStorage composable**
   Créer `composables/useSecureStorage.ts`. Wrapper `@capacitor-community/secure-storage`. Méthodes : `setItem(key, value)`, `getItem(key)`, `removeItem(key)`. Utiliser iOS Keychain / Android Keystore automatiquement via le plugin.
   **Ref :** `03-technical-design-document.md §2.2`
 
-- [ ] **Ticket 10.3 — useDatabaseService (init + migrations)**
+- [x] **Ticket 10.3 — useDatabaseService (init + migrations)**
   Créer `composables/useDatabaseService.ts`. Initialiser `@capawesome/capacitor-sqlite` avec chiffrement AES-256 (clé générée au premier lancement, stockée via `useSecureStorage`). Implémenter le runner de migrations (`schema_version` dans `app_state`). Appliquer le DDL complet (tables `documents`, `share_links`, `sync_log`, `app_state`, `local_logs`, FTS5, triggers, index).
   **Ref :** `03-technical-design-document.md §3.1` · `03-technical-design-document.md §3.2`
 
-- [ ] **Ticket 10.4 — DocumentRepository local (CRUD SQLite)**
+- [x] **Ticket 10.4 — DocumentRepository local (CRUD SQLite)**
   Créer `composables/useLocalDocumentRepository.ts`. Implémenter : `insertDocument(doc)`, `getDocumentById(id)`, `getAllDocuments(workspaceId, filters)`, `updateDocument(id, fields)`, `softDeleteDocument(id)`, `getPendingOcrDocuments()`, `upsertDocumentFromCloud(cloudDoc)` (LWW local).
   **Ref :** `03-technical-design-document.md §3.1`
 
-- [ ] **Ticket 10.5 — FTS5 Search local**
+- [x] **Ticket 10.5 — FTS5 Search local**
   Ajouter dans `useLocalDocumentRepository.ts` la méthode `searchDocuments(workspaceId, query)` : requête FTS5 `documents_fts MATCH ?` avec tokenizer unicode61. Les triggers SQLite maintiennent l'index automatiquement à chaque INSERT/UPDATE/DELETE.
   **Ref :** `03-technical-design-document.md §3.1 FTS5`
 
-- [ ] **Ticket 10.6 — useFileSystem composable (chiffrement natif)**
+- [x] **Ticket 10.6 — useFileSystem composable (chiffrement natif)**
   Créer `composables/useFileSystem.ts`. Wrapper `@capacitor/filesystem`. Méthodes : `saveEncryptedFile(documentId, buffer, extension)` → chiffrement AES-256-GCM via plugin natif (IV aléatoire + AuthTag), `readDecryptedFile(localPath)`, `readRawFile(localPath)` (pour l'upload S3 : envoi du ciphertext brut), `deleteFile(localPath)`. **Ne jamais chiffrer en JS WebView.**
   **Ref :** `03-technical-design-document.md §2.1` · `03-technical-design-document.md §4.1`
 
-- [ ] **Ticket 10.7 — useLocalSearchStore (Pinia offline)**
+- [x] **Ticket 10.7 — useLocalSearchStore (Pinia offline)**
   Étendre ou créer un store de recherche locale. `searchOffline(workspaceId, query)` → appel `useLocalDocumentRepository.searchDocuments()`. Utilisé en fallback quand `@capacitor/network` indique offline.
   **Ref :** `03-technical-design-document.md §3.1` · `02-product-requirements-document.md §7 F2`
 
