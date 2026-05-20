@@ -303,6 +303,26 @@ export const useDocumentStore = defineStore('document', () => {
     resetUpload()
   }
 
+  async function refreshFromDatabase(workspaceId: string): Promise<void> {
+    const localRepo = useLocalDocumentRepository()
+    const localSearchStore = useLocalSearchStore()
+
+    try {
+      const localDocs = await localRepo.getAllDocuments(workspaceId, _lastFilters)
+
+      if (localDocs && localDocs.length > 0) {
+        _patchDocuments(localDocs)
+
+        // Rafraîchir la recherche locale si une query est active
+        if (localSearchStore.query) {
+          await localSearchStore.searchOffline(workspaceId, localSearchStore.query)
+        }
+      }
+    } catch (err) {
+      console.warn('[DocumentStore] refreshFromDatabase error:', err)
+    }
+  }
+
   return {
     // State
     documents,
@@ -332,5 +352,6 @@ export const useDocumentStore = defineStore('document', () => {
     startPolling,
     stopPolling,
     reset,
+    refreshFromDatabase,
   }
 })

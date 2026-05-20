@@ -445,35 +445,35 @@
 
 > **Dépendance critique** : ne pas commencer avant que `POST /documents/sync` (Phase 5) et `GET /documents/sync?since=` (Phase 5) soient déployés et testés.
 
-- [ ] **Ticket 11.1 — useSyncService (structure + pull)**
+- [x] **Ticket 11.1 — useSyncService (structure + pull)**
   Créer `composables/useSyncService.ts`. Implémenter `triggerAsync(workspaceId)` (fire-and-forget, guard `_isSyncing`). Implémenter `pullFromCloud(workspaceId)` : lire `last_sync_at` depuis `app_state`, appeler `GET /documents/sync?since=`, upsert chaque doc reçu, mettre à jour `last_sync_at`.
   **Ref :** `08-ui-component-blueprint.md useSyncService` · `03-technical-design-document.md §2.5`
 
-- [ ] **Ticket 11.2 — useSyncService : OCR queue**
+- [x] **Ticket 11.2 — useSyncService : OCR queue**
   Implémenter `processOcrQueue()` dans `useSyncService.ts`. Fetch `getPendingOcrDocuments()`, traitement séquentiel (1 à la fois — pas de parallélisme). Pour chaque doc : lire + déchiffrer fichier, appeler `POST /ocr/process`, mettre à jour `ocr_text` + `ocr_status` en SQLite. Retry avec backoff (3 tentatives, 2s/8s/32s).
   **Ref :** `08-ui-component-blueprint.md useSyncService._processOcr`
 
-- [ ] **Ticket 11.3 — useSyncService : upload fichiers vers S3**
+- [x] **Ticket 11.3 — useSyncService : upload fichiers vers S3**
   Implémenter `uploadPendingFiles()`. Fetch `sync_log` entries `operation='upload'` + sans `cloud_key`. Pour chaque : POST `/files/upload-url`, lire le fichier **chiffré brut** (`readRawFile`), PUT vers S3 presigned URL, mettre à jour `cloud_key + sync_status = synced` en SQLite.
   **Ref :** `08-ui-component-blueprint.md useSyncService._uploadFile`
 
-- [ ] **Ticket 11.4 — useSyncService : push metadata vers backend**
+- [x] **Ticket 11.4 — useSyncService : push metadata vers backend**
   Implémenter `pushToCloud()`. Fetch `sync_log` entries `operation='update_meta' | 'delete'`. Batch POST `/documents/sync`. Traiter les résultats (created/updated/skipped). Marquer les entries `sync_log` comme `done`.
   **Ref :** `08-ui-component-blueprint.md useSyncService.pushToCloud`
 
-- [ ] **Ticket 11.5 — sync_log CRUD + SyncLogRepository local**
+- [x] **Ticket 11.5 — sync_log CRUD + SyncLogRepository local**
   Créer les méthodes dans `useDatabaseService` ou un composable dédié : `addSyncLogEntry(documentId, operation)`, `getPendingSyncLogEntries()`, `updateSyncLogEntry(id, status, errorMessage?)`, `getSyncLogByDocument(docId)`.
   **Ref :** `03-technical-design-document.md §3.1 sync_log`
 
-- [ ] **Ticket 11.6 — Network Listener (Capacitor Network)**
+- [x] **Ticket 11.6 — Network Listener (Capacitor Network)**
   Créer `composables/useNetworkListener.ts`. Écouter `@capacitor/network` `networkStatusChange`. Quand réseau disponible → `useSyncService().triggerAsync(currentWorkspaceId)`. Enregistrer le listener dans le plugin Nuxt ou dans `app.vue` `onMounted`.
   **Ref :** `03-technical-design-document.md §2.5`
 
-- [ ] **Ticket 11.7 — App Lifecycle (Capacitor App)**
+- [x] **Ticket 11.7 — App Lifecycle (Capacitor App)**
   Créer `composables/useAppLifecycle.ts`. Écouter `@capacitor/app` `appStateChange`. En `isActive = true` (foreground) : si réseau disponible → déclencher sync. En background : marquer documents `ocr_status='processing'` → `'pending'` (suspend OCR). Au démarrage : scanner `ocr_status='pending'` + `sync_status='pending'` → reprendre.
   **Ref :** `03-technical-design-document.md §2.5`
 
-- [ ] **Ticket 11.8 — Intégration Sync dans DocumentStore offline**
+- [x] **Ticket 11.8 — Intégration Sync dans DocumentStore offline**
   Dans `document.store.ts` : ajouter `refreshFromDatabase(workspaceId)` (reload depuis SQLite vers le store après une sync). Appeler après chaque cycle `syncAll()`. Mettre à jour `useLocalSearchStore` si des documents ont changé.
   **Ref :** `08-ui-component-blueprint.md useSyncService.syncAll`
 

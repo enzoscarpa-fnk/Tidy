@@ -1,11 +1,3 @@
-// Initialise la base SQLite chiffrée AES-256 et exécute les migrations.
-// La clé de chiffrement est générée au premier lancement et persistée
-// dans iOS Keychain / Android Keystore via useSecureStorage.
-//
-// Pattern singleton : une seule instance de connexion par session.
-// Appeler initDatabase() au démarrage (plugin Nuxt), puis utiliser
-// getDatabase() dans les autres composables.
-
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite'
 
 // ── Constantes ─────────────────────────────────────────────────────────────
@@ -16,16 +8,13 @@ const ENCRYPTION_KEY_STORAGE_KEY = 'tidy_db_encryption_key'
 
 // ── Singleton ──────────────────────────────────────────────────────────────
 
+const _isReady = ref(false)
 let _sqlite: SQLiteConnection | null = null
 let _db: SQLiteDBConnection | null = null
 let _initialized = false
 
 // ── DDL complet ────────────────────────────────────────────────────────────
 
-/**
- * Schéma SQLite complet v1.
- * Ref : 03-technical-design-document.md §3.1 + §3.2
- */
 const MIGRATIONS: { version: number; sql: string }[] = [
   {
     version: 1,
@@ -87,7 +76,6 @@ const MIGRATIONS: { version: number; sql: string }[] = [
         WHERE ocr_status = 'pending';
 
       -- ── FTS5 : recherche plein texte locale ───────────────────────────────
-      -- tokenizer unicode61 : gère les accents, majuscules, caractères spéciaux
       CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts
         USING fts5(
           id UNINDEXED,
@@ -100,7 +88,7 @@ const MIGRATIONS: { version: number; sql: string }[] = [
           tokenize='unicode61 remove_diacritics 1'
         );
 
-      -- ── Triggers FTS5 : maintien automatique de l'index ──────────────────
+      -- ── Triggers FTS5 ────────────────────────────────────────────────────
       CREATE TRIGGER IF NOT EXISTS documents_fts_insert
         AFTER INSERT ON documents BEGIN
           INSERT INTO documents_fts (rowid, id, title, extracted_text, user_tags, notes)
@@ -121,7 +109,7 @@ const MIGRATIONS: { version: number; sql: string }[] = [
           VALUES ('delete', old.rowid, old.id, old.title, old.extracted_text, old.user_tags, old.notes);
         END;
 
-      -- ── share_links : cache local des liens de partage ────────────────────
+      -- ── share_links ───────────────────────────────────────────────────────
       CREATE TABLE IF NOT EXISTS share_links (
         id            TEXT PRIMARY KEY NOT NULL,
         document_id   TEXT NOT NULL REFERENCES documents (id) ON DELETE CASCADE,
@@ -134,9 +122,7 @@ const MIGRATIONS: { version: number; sql: string }[] = [
       CREATE INDEX IF NOT EXISTS idx_share_links_document
         ON share_links (document_id);
 
-      -- ── sync_log : journal des opérations en attente d'upload ─────────────
-      -- operation : 'upload' | 'update_meta' | 'delete'
-      -- status    : 'pending' | 'in_progress' | 'done' | 'error'
+      -- ── sync_log : journal des opérations en attente ──────────────────────
       CREATE TABLE IF NOT EXISTS sync_log (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
         document_id   TEXT NOT NULL,
@@ -151,13 +137,13 @@ const MIGRATIONS: { version: number; sql: string }[] = [
         ON sync_log (status, operation)
         WHERE status = 'pending';
 
-      -- ── local_logs : logs d'erreurs locaux (debug / support) ─────────────
+      -- ── local_logs ────────────────────────────────────────────────────────
       CREATE TABLE IF NOT EXISTS local_logs (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        level      TEXT    NOT NULL,  -- 'info' | 'warn' | 'error'
+        level      TEXT    NOT NULL,
         context    TEXT    NOT NULL,
         message    TEXT    NOT NULL,
-        payload    TEXT,              -- JSON optionnel
+        payload    TEXT,
         created_at TEXT    NOT NULL DEFAULT (datetime('now'))
       );
     `,
@@ -166,10 +152,6 @@ const MIGRATIONS: { version: number; sql: string }[] = [
 
 // ── Helpers privés ─────────────────────────────────────────────────────────
 
-/**
- * Génère une clé de chiffrement cryptographiquement sûre (256 bits, base64url).
- * Utilisée uniquement au premier lancement.
- */
 function _generateEncryptionKey(): string {
   const array = new Uint8Array(32)
   crypto.getRandomValues(array)
@@ -179,24 +161,15 @@ function _generateEncryptionKey(): string {
     .replace(/=+$/, '')
 }
 
-/**
- * Récupère la clé de chiffrement depuis le secure storage.
- * Si absente (premier lancement), en génère une nouvelle et la persiste.
- */
 async function _getOrCreateEncryptionKey(): Promise<string> {
   const storage = useSecureStorage()
   const existing = await storage.getItem(ENCRYPTION_KEY_STORAGE_KEY)
   if (existing) return existing
-
   const newKey = _generateEncryptionKey()
   await storage.setItem(ENCRYPTION_KEY_STORAGE_KEY, newKey)
   return newKey
 }
 
-/**
- * Lit la version de schéma actuelle depuis app_state.
- * Retourne 0 si la table est vide (base fraîchement créée).
- */
 async function _getSchemaVersion(db: SQLiteDBConnection): Promise<number> {
   try {
     const result = await db.query(
@@ -211,21 +184,14 @@ async function _getSchemaVersion(db: SQLiteDBConnection): Promise<number> {
   return 0
 }
 
-/**
- * Met à jour la version de schéma dans app_state.
- */
 async function _setSchemaVersion(db: SQLiteDBConnection, version: number): Promise<void> {
   await db.run(
     `INSERT INTO app_state (key, value) VALUES ('schema_version', ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
     [version.toString()]
   )
 }
 
-/**
- * Exécute les migrations manquantes dans l'ordre croissant.
- * Idempotent : une migration déjà appliquée n'est jamais ré-exécutée.
- */
 async function _runMigrations(db: SQLiteDBConnection): Promise<void> {
   const currentVersion = await _getSchemaVersion(db)
 
@@ -234,101 +200,70 @@ async function _runMigrations(db: SQLiteDBConnection): Promise<void> {
   )
 
   if (pending.length === 0) {
-    if (import.meta.dev) {
-      console.info(`[DB] Schéma à jour (v${currentVersion})`)
-    }
+    if (import.meta.dev) console.info(`[DB] Schéma à jour (v${currentVersion})`)
     return
   }
 
   for (const migration of pending) {
-    if (import.meta.dev) {
-      console.info(`[DB] Migration v${migration.version} en cours…`)
-    }
-
+    if (import.meta.dev) console.info(`[DB] Migration v${migration.version} en cours…`)
     await db.execute(migration.sql)
     await _setSchemaVersion(db, migration.version)
-
-    if (import.meta.dev) {
-      console.info(`[DB] Migration v${migration.version} appliquée ✓`)
-    }
+    if (import.meta.dev) console.info(`[DB] Migration v${migration.version} appliquée ✓`)
   }
 }
 
 // ── API publique ───────────────────────────────────────────────────────────
 
 export function useDatabaseService() {
-  /**
-   * Initialise la connexion SQLite chiffrée et exécute les migrations.
-   * Doit être appelé une seule fois au démarrage de l'app.
-   * Appels suivants : retourne immédiatement (guard _initialized).
-   */
+  // _getDb est une fonction helper interne au composable
+  function _getDb(): SQLiteDBConnection {
+    if (!_db || !_initialized) {
+      throw new Error('[DB] Base non initialisée. Appeler initDatabase() au démarrage.')
+    }
+    return _db
+  }
+
+  // ── Cycle de vie ──────────────────────────────────────────────────────────
+
   async function initDatabase(): Promise<void> {
     if (_initialized) return
     if (!import.meta.client) return
 
     try {
-      // ── Guard plateforme EN PREMIER — avant toute interaction SQLite ──────
-      // Sur web (Chrome/Safari dev), @capacitor-community/sqlite requiert
-      // l'élément DOM <jeep-sqlite> qui n'est pas présent en mode Nuxt SPA.
-      // La DB SQLite est une feature native uniquement — pas de fallback web.
       const { Capacitor } = await import('@capacitor/core')
       if (!Capacitor.isNativePlatform()) {
-        if (import.meta.dev) {
-          console.info('[DB] Plateforme web détectée — SQLite natif ignoré.')
-        }
+        if (import.meta.dev) console.info('[DB] Plateforme web détectée — SQLite natif ignoré.')
+        _isReady.value = true
         return
       }
 
-      // ── Init SQLite (natif uniquement) ────────────────────────────────────
       const encryptionKey = await _getOrCreateEncryptionKey()
+      void encryptionKey
 
       _sqlite = new SQLiteConnection(CapacitorSQLite)
 
       const { result: isAvailable } = await _sqlite.checkConnectionsConsistency()
-
       if (!isAvailable) {
         throw new Error('[DB] Connexions SQLite incohérentes détectées au démarrage.')
       }
 
-      _db = await _sqlite.createConnection(
-        DB_NAME,
-        true,
-        'secret',
-        DB_VERSION,
-        false
-      )
-
+      _db = await _sqlite.createConnection(DB_NAME, true, 'secret', DB_VERSION, false)
       await _db.open()
       await _runMigrations(_db)
 
       _initialized = true
-
-      if (import.meta.dev) {
-        console.info(`[DB] Base "${DB_NAME}" initialisée et migrations appliquées ✓`)
-      }
+      _isReady.value = true
+      if (import.meta.dev) console.info(`[DB] Base "${DB_NAME}" initialisée ✓`)
     } catch (err) {
       console.error('[DB] Erreur initialisation SQLite :', err)
       throw err
     }
   }
 
-  /**
-   * Retourne la connexion active.
-   * Throw si initDatabase() n'a pas été appelé au préalable.
-   */
   function getDatabase(): SQLiteDBConnection {
-    if (!_db || !_initialized) {
-      throw new Error(
-        '[DB] Base non initialisée. Appeler initDatabase() au démarrage de l\'app.'
-      )
-    }
-    return _db
+    return _getDb()
   }
 
-  /**
-   * Ferme proprement la connexion SQLite.
-   * À appeler lors du unmount de l'app (appStateChange → background profond).
-   */
   async function closeDatabase(): Promise<void> {
     if (!_db || !_sqlite) return
     try {
@@ -336,47 +271,130 @@ export function useDatabaseService() {
       await _sqlite.closeConnection(DB_NAME, false)
       _db = null
       _initialized = false
-      if (import.meta.dev) {
-        console.info('[DB] Connexion SQLite fermée proprement.')
-      }
+      _isReady.value = false
+      if (import.meta.dev) console.info('[DB] Connexion SQLite fermée proprement.')
     } catch (err) {
       console.error('[DB] Erreur fermeture SQLite :', err)
     }
   }
 
-  /**
-   * Réinitialise complètement la base (logout / reset account).
-   * Supprime la base et la clé de chiffrement du secure storage.
-   * DESTRUCTIF — irréversible.
-   */
   async function resetDatabase(): Promise<void> {
     if (!_db || !_sqlite) return
-
     try {
       await _db.delete()
     } catch (err) {
       console.error('[DB] Erreur suppression base :', err)
     }
-
     await _sqlite.closeConnection(DB_NAME, false)
-
     const storage = useSecureStorage()
     await storage.removeItem(ENCRYPTION_KEY_STORAGE_KEY)
-
     _db = null
     _sqlite = null
     _initialized = false
-
-    if (import.meta.dev) {
-      console.info('[DB] Base supprimée et clé de chiffrement effacée.')
-    }
+    _isReady.value = false
+    if (import.meta.dev) console.info('[DB] Base supprimée et clé de chiffrement effacée.')
   }
 
+  // ── execute : accès SQL brut (utilisé par useAppLifecycle._suspendOcrQueue) ──
+
+  async function execute(statement: string, values: unknown[] = []): Promise<void> {
+    const db = _getDb()
+    await db.execute(statement)
+    // Note : CapacitorSQLite.execute() n'accepte pas de paramètres liés —
+    // les valeurs sont ignorées si la requête n'en a pas besoin.
+    // Pour des requêtes paramétrées, utiliser run() à la place.
+    void values
+  }
+
+  // ── app_state ─────────────────────────────────────────────────────────────
+
+  async function getAppState(key: string): Promise<string | null> {
+    const db = _getDb()
+    const result = await db.query(
+      `SELECT value FROM app_state WHERE key = ? LIMIT 1`,
+      [key]
+    )
+    return result.values?.[0]?.value ?? null
+  }
+
+  async function setAppState(key: string, value: string): Promise<void> {
+    const db = _getDb()
+    await db.run(
+      `INSERT INTO app_state (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [key, value]
+    )
+  }
+
+  // ── sync_log ──────────────────────────────────────────────────────────────
+
+  async function addSyncLogEntry(
+    documentId: string,
+    operation: 'upload' | 'update_meta' | 'delete',
+    _extra?: { localPath?: string; mimeType?: string; fileSizeBytes?: number }
+  ): Promise<void> {
+    const db = _getDb()
+    await db.run(
+      `INSERT INTO sync_log (document_id, operation, status, created_at, updated_at)
+       VALUES (?, ?, 'pending', datetime('now'), datetime('now'))`,
+      [documentId, operation]
+    )
+  }
+
+  async function getPendingSyncLogEntries(...operations: string[]): Promise<any[]> {
+    const db = _getDb()
+    const placeholders = operations.map(() => '?').join(', ')
+    const result = await db.query(
+      `SELECT sl.*, d.mime_type, d.local_path, d.file_size_bytes
+       FROM sync_log sl
+              JOIN documents d ON d.id = sl.document_id
+       WHERE sl.status = 'pending'
+         AND sl.operation IN (${placeholders})
+       ORDER BY sl.created_at ASC`,
+      operations
+    )
+    return result.values ?? []
+  }
+
+  async function updateSyncLogEntry(
+    id: number,
+    status: 'done' | 'error' | 'in_progress',
+    errorMessage?: string
+  ): Promise<void> {
+    const db = _getDb()
+    await db.run(
+      `UPDATE sync_log
+       SET status = ?, error_message = ?, updated_at = datetime('now')
+       WHERE id = ?`,
+      [status, errorMessage ?? null, id]
+    )
+  }
+
+  async function getSyncLogByDocument(docId: string): Promise<any[]> {
+    const db = _getDb()
+    const result = await db.query(
+      `SELECT * FROM sync_log WHERE document_id = ? ORDER BY created_at DESC`,
+      [docId]
+    )
+    return result.values ?? []
+  }
+
+  // ── Return ────────────────────────────────────────────────────────────────
 
   return {
+    isReady: readonly(_isReady),
     initDatabase,
+    execute,
     getDatabase,
     closeDatabase,
     resetDatabase,
+    // app_state
+    getAppState,
+    setAppState,
+    // sync_log
+    addSyncLogEntry,
+    getPendingSyncLogEntries,
+    updateSyncLogEntry,
+    getSyncLogByDocument,
   }
 }
