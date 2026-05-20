@@ -63,6 +63,9 @@ async function handleTypeOverride(type: DetectedType): Promise<void> {
   showTypeOverride.value = false
 }
 
+// ── Share Modal ────────────────────────────────────────────────────────
+const showShareModal = ref(false)
+
 // ── Actions document ───────────────────────────────────────────────────
 const isArchiving = ref(false)
 const isReprocessing = ref(false)
@@ -210,6 +213,18 @@ onUnmounted(() => {
           Modifier
         </NuxtLink>
 
+        <!-- Partager -->
+        <button
+          type="button"
+          class="flex items-center gap-1.5 rounded-xl border border-tidy-border bg-white px-4 py-2 text-sm font-medium text-tidy-text-primary transition-colors hover:border-tidy-primary active:opacity-70"
+          @click="showShareModal = true"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          Partager
+        </button>
+
         <!-- Archiver — uniquement si ENRICHED ou CLASSIFIED_ONLY -->
         <button
           v-if="canArchive"
@@ -224,6 +239,12 @@ onUnmounted(() => {
           {{ isArchiving ? 'Archivage…' : 'Archiver' }}
         </button>
       </div>
+
+      <!-- Share Modal -->
+      <ShareModal
+        v-model="showShareModal"
+        :document-id="documentId"
+      />
 
       <!-- Type override inline (affiché à la demande) -->
       <Transition

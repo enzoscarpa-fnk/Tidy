@@ -485,15 +485,15 @@
 
 > **Dépendance** : Phase 5 (routes share backend) terminée.
 
-- [ ] **Ticket 12.1 — useShareStore (Pinia)**
+- [x] **Ticket 12.1 — useShareStore (Pinia)**
   Créer `stores/share.store.ts`. State : `activeShareLink` par `documentId`. Actions : `createShareLink(documentId, expiresIn)` → `POST /documents/:id/share`, `revokeShareLink(linkId)` → `DELETE /share/:linkId`. Getter `getShareLink(documentId)`.
   **Ref :** `07-api-contract.md §3 Module Share`
 
-- [ ] **Ticket 12.2 — ShareModal.vue (Dumb) + intégration DocumentDetail**
+- [x] **Ticket 12.2 — ShareModal.vue (Dumb) + intégration DocumentDetail**
   Créer `components/ShareModal.vue`. Bottom sheet ou modal : sélecteur durée (24h / 7j / 30j), bouton "Générer le lien", affichage du lien avec bouton "Copier", bouton "Révoquer". Intégrer le bouton "Partager" dans `DocumentDetail.vue`.
   **Ref :** `06-ux-flow.md §3 Flow 4` · `08-ui-component-blueprint.md`
 
-- [ ] **Ticket 12.3 — Partage natif (Capacitor Share)**
+- [x] **Ticket 12.3 — Partage natif (Capacitor Share)**
   Dans `ShareModal.vue` : après génération du lien, proposer "Envoyer via..." → appeler `@capacitor/share` `share({ url })` pour ouvrir la share sheet native iOS/Android.
   **Ref :** `03-technical-design-document.md §2.4`
 
