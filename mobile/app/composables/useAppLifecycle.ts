@@ -31,9 +31,7 @@ export function useAppLifecycle() {
   }
 
   async function _suspendOcrQueue(): Promise<void> {
-    // Le mock du test expose { execute: mockDbExecute } — on appelle execute() directement
-    // sans passer par getDatabase() qui n'est pas dans le mock
-    const db = useDatabaseService() as any
+    const db = useDatabaseService()
     await db.execute(
       `UPDATE documents SET ocrStatus = 'pending' WHERE ocrStatus = 'processing'`,
       []

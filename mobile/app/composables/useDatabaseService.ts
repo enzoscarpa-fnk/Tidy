@@ -8,6 +8,7 @@ const ENCRYPTION_KEY_STORAGE_KEY = 'tidy_db_encryption_key'
 
 // ── Singleton ──────────────────────────────────────────────────────────────
 
+const _isReady = ref(false)
 let _sqlite: SQLiteConnection | null = null
 let _db: SQLiteDBConnection | null = null
 let _initialized = false
@@ -214,6 +215,7 @@ async function _runMigrations(db: SQLiteDBConnection): Promise<void> {
 // ── API publique ───────────────────────────────────────────────────────────
 
 export function useDatabaseService() {
+  // _getDb est une fonction helper interne au composable
   function _getDb(): SQLiteDBConnection {
     if (!_db || !_initialized) {
       throw new Error('[DB] Base non initialisée. Appeler initDatabase() au démarrage.')
@@ -231,11 +233,11 @@ export function useDatabaseService() {
       const { Capacitor } = await import('@capacitor/core')
       if (!Capacitor.isNativePlatform()) {
         if (import.meta.dev) console.info('[DB] Plateforme web détectée — SQLite natif ignoré.')
+        _isReady.value = true
         return
       }
 
       const encryptionKey = await _getOrCreateEncryptionKey()
-      // Note : encryptionKey est utilisé dans createConnection — conservé pour la doc
       void encryptionKey
 
       _sqlite = new SQLiteConnection(CapacitorSQLite)
@@ -250,6 +252,7 @@ export function useDatabaseService() {
       await _runMigrations(_db)
 
       _initialized = true
+      _isReady.value = true
       if (import.meta.dev) console.info(`[DB] Base "${DB_NAME}" initialisée ✓`)
     } catch (err) {
       console.error('[DB] Erreur initialisation SQLite :', err)
@@ -268,6 +271,7 @@ export function useDatabaseService() {
       await _sqlite.closeConnection(DB_NAME, false)
       _db = null
       _initialized = false
+      _isReady.value = false
       if (import.meta.dev) console.info('[DB] Connexion SQLite fermée proprement.')
     } catch (err) {
       console.error('[DB] Erreur fermeture SQLite :', err)
@@ -287,7 +291,19 @@ export function useDatabaseService() {
     _db = null
     _sqlite = null
     _initialized = false
+    _isReady.value = false
     if (import.meta.dev) console.info('[DB] Base supprimée et clé de chiffrement effacée.')
+  }
+
+  // ── execute : accès SQL brut (utilisé par useAppLifecycle._suspendOcrQueue) ──
+
+  async function execute(statement: string, values: unknown[] = []): Promise<void> {
+    const db = _getDb()
+    await db.execute(statement)
+    // Note : CapacitorSQLite.execute() n'accepte pas de paramètres liés —
+    // les valeurs sont ignorées si la requête n'en a pas besoin.
+    // Pour des requêtes paramétrées, utiliser run() à la place.
+    void values
   }
 
   // ── app_state ─────────────────────────────────────────────────────────────
@@ -331,7 +347,7 @@ export function useDatabaseService() {
     const result = await db.query(
       `SELECT sl.*, d.mime_type, d.local_path, d.file_size_bytes
        FROM sync_log sl
-       JOIN documents d ON d.id = sl.document_id
+              JOIN documents d ON d.id = sl.document_id
        WHERE sl.status = 'pending'
          AND sl.operation IN (${placeholders})
        ORDER BY sl.created_at ASC`,
@@ -366,7 +382,9 @@ export function useDatabaseService() {
   // ── Return ────────────────────────────────────────────────────────────────
 
   return {
+    isReady: readonly(_isReady),
     initDatabase,
+    execute,
     getDatabase,
     closeDatabase,
     resetDatabase,

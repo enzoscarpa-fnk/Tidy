@@ -275,6 +275,7 @@ export function useLocalDocumentRepository() {
       userOverrideType?: string | null
       processingStatus?: ProcessingStatus
       thumbnailUrl?: string | null
+      cloudKey?: string | null
       ocrStatus?: string
       syncStatus?: string
       extractedText?: string | null
@@ -312,6 +313,10 @@ export function useLocalDocumentRepository() {
     if (fields.thumbnailUrl !== undefined) {
       setClauses.push('thumbnail_url = ?')
       params.push(fields.thumbnailUrl)
+    }
+    if (fields.cloudKey !== undefined) {
+      setClauses.push('cloud_key = ?')
+      params.push(fields.cloudKey)
     }
     if (fields.ocrStatus !== undefined) {
       setClauses.push('ocr_status = ?')

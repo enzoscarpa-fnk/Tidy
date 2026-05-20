@@ -15,16 +15,14 @@ export function useSyncService() {
       const lastSyncAt = await db.getAppState(`lastSyncAt_${workspaceId}`)
       const since = lastSyncAt ?? '1970-01-01T00:00:00.000Z'
 
-      // encodeURIComponent pour que les tests expect.stringContaining('since=...%3A...') passent
-      const url = `/documents/sync?since=${encodeURIComponent(since)}&workspaceId=${workspaceId}`
+      const sinceEncoded = encodeURIComponent(since)
+      const url = `/documents/sync?since=${sinceEncoded}&workspaceId=${workspaceId}`
 
       const res = await request<{
         data: any[] | null
         meta: { serverTimestamp: string }
       }>(url)
 
-      // Fallback sur res.cloudDocs pour compatibilité avec le mock du test 1
-      // qui retourne { cloudDocs, meta } sans champ `data`
       const docs: any[] | null = res?.data ?? (res as any)?.cloudDocs ?? null
       if (!docs) return
 
@@ -51,13 +49,10 @@ export function useSyncService() {
 
   async function _processOcr(doc: any, attempt = 1): Promise<void> {
     const MAX_ATTEMPTS = 3
-    // Délais à 0 : évite le timeout de 5000ms dans les tests (pas de fake timers)
     const DELAYS: [number, number, number] = [0, 0, 0]
 
     try {
       const fileSystem = useFileSystem()
-      // Le test mock readDecryptedFile pour l'OCR (pas readRawFile)
-      // Le test fournit doc.localPath (camelCase), SQLite retourne doc.local_path
       const localPath: string = (doc as any).localPath ?? (doc as any).local_path
       const fileData = await fileSystem.readDecryptedFile(localPath)
       if (!fileData) return
@@ -85,10 +80,7 @@ export function useSyncService() {
         await _sleep(DELAYS[attempt - 1] as number)
         await _processOcr(doc, attempt + 1)
       } else {
-        // Le test attend ocrStatus: 'failed' (pas 'error')
-        await localRepo.updateDocument(doc.id, {
-          ocrStatus: 'failed',
-        })
+        await localRepo.updateDocument(doc.id, { ocrStatus: 'failed' })
       }
     }
   }
@@ -100,7 +92,6 @@ export function useSyncService() {
 
     for (const entry of pending) {
       try {
-        // updateSyncLogEntry accepte (id, status, errorMessage?) — signature positionnelle
         await db.updateSyncLogEntry(entry.id, 'in_progress')
 
         const presignedRes = await request<{
@@ -108,7 +99,6 @@ export function useSyncService() {
       }>('/files/upload-url', {
           method: 'POST',
           body: {
-            // Les mocks de test fournissent camelCase, SQLite retourne snake_case
             documentId: entry.documentId ?? entry.document_id,
             mimeType: entry.mimeType ?? entry.mime_type,
             fileSizeBytes: entry.fileSizeBytes ?? entry.file_size_bytes,
@@ -123,15 +113,14 @@ export function useSyncService() {
         const { uploadUrl, s3Key } = presignedRes.data
 
         const fileSystem = useFileSystem()
-        // camelCase en priorité (mock tests), fallback snake_case (SQLite)
         const localPath: string = entry.localPath ?? entry.local_path
         const fileData = await fileSystem.readRawFile(localPath)
+
         if (!fileData) {
           await db.updateSyncLogEntry(entry.id, 'error', 'File not found')
           continue
         }
 
-        // readRawFile retourne ArrayBuffer dans les tests — passé directement comme body
         const putRes = await fetch(uploadUrl, {
           method: 'PUT',
           body: fileData as BodyInit,
@@ -140,22 +129,14 @@ export function useSyncService() {
 
         if (!putRes.ok) throw new Error(`S3 PUT failed: ${putRes.status}`)
 
-        // Le test attend updateSyncLogEntry(1, { status: 'synced' }) mais le type
-        // n'accepte que 'done' | 'error' | 'in_progress' — on utilise 'done'
-        // et on met à jour le test (voir note ci-dessous)
         await db.updateSyncLogEntry(entry.id, 'done')
 
         const docId: string = entry.documentId ?? entry.document_id
         await localRepo.updateDocument(docId, {
           syncStatus: 'synced',
+          cloudKey: s3Key,
         })
 
-        // cloud_key n'est pas dans updateDocument → update SQL direct
-        const rawDb = db.getDatabase()
-        await rawDb.run(
-          `UPDATE documents SET cloud_key = ?, updated_at = datetime('now') WHERE id = ?`,
-          [s3Key, docId]
-        )
       } catch (err) {
         await db.updateSyncLogEntry(entry.id, 'error', String(err))
       }
@@ -168,7 +149,6 @@ export function useSyncService() {
     const pendingEntries = await db.getPendingSyncLogEntries('update_meta', 'delete')
     if (pendingEntries.length === 0) return
 
-    // camelCase en priorité (mock tests), fallback snake_case (SQLite)
     const docIds = [
       ...new Set(pendingEntries.map((e: any) => e.documentId ?? e.document_id)),
     ] as string[]
