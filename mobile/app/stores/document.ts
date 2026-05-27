@@ -155,10 +155,26 @@ export const useDocumentStore = defineStore('document', () => {
     uploadProgress.value = 0
     uploadError.value = null
 
+    // Lire le fichier comme ArrayBuffer AVANT d'ouvrir le XHR
+    // Cela garantit que le contenu est entièrement en mémoire dans la WebView
+    // avant que le picker n'ait rendu le contrôle à iOS (et mis l'app en bg)
+    let fileBuffer: ArrayBuffer
+    try {
+      fileBuffer = await file.arrayBuffer()
+    } catch {
+      uploadStatus.value = 'error'
+      uploadError.value = "Impossible de lire le fichier sélectionné."
+      throw new Error('File read error')
+    }
+
+    // Reconstruire un Blob depuis l'ArrayBuffer pour le FormData
+    const fileBlob = new Blob([fileBuffer], { type: file.type })
+    const safeFile = new File([fileBlob], file.name, { type: file.type })
+
     return new Promise<void>((resolve, reject) => {
       const xhr = new XMLHttpRequest()
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', safeFile)
       formData.append('workspaceId', workspaceId)
 
       xhr.upload.onprogress = (e: ProgressEvent) => {
