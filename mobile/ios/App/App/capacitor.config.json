@@ -1,0 +1,36 @@
+{
+	"appId": "com.tidy.app",
+	"appName": "Tidy",
+	"webDir": ".output/public",
+	"plugins": {
+		"CapacitorSQLite": {
+			"iosDatabaseLocation": "Library/CapacitorDatabase",
+			"iosIsEncryption": true,
+			"iosKeychainPrefix": "tidy",
+			"iosBiometric": {
+				"biometricAuth": false,
+				"biometricTitle": "Accès à Tidy"
+			},
+			"androidIsEncryption": true,
+			"androidBiometric": {
+				"biometricAuth": false,
+				"biometricTitle": "Accès à Tidy"
+			},
+			"electronIsEncryption": true,
+			"electronWindowsLocation": "C:\\ProgramData\\CapacitorDatabases",
+			"electronMacLocation": "/Users/Shared/CapacitorDatabases",
+			"electronLinuxLocation": "Databases"
+		},
+		"Filesystem": {},
+		"Camera": {}
+	},
+	"packageClassList": [
+		"CapacitorSQLitePlugin",
+		"AppPlugin",
+		"CAPCameraPlugin",
+		"FilesystemPlugin",
+		"CAPNetworkPlugin",
+		"SharePlugin",
+		"SecureStoragePlugin"
+	]
+}

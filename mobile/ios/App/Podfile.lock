@@ -1,0 +1,87 @@
+PODS:
+  - Capacitor (8.3.4):
+    - CapacitorCordova
+  - CapacitorApp (7.1.2):
+    - Capacitor
+  - CapacitorCamera (7.0.5):
+    - Capacitor
+  - CapacitorCommunitySqlite (6.0.2):
+    - Capacitor
+    - SQLCipher
+    - ZIPFoundation
+  - CapacitorCordova (8.3.4)
+  - CapacitorFilesystem (7.1.8):
+    - Capacitor
+    - IONFilesystemLib (~> 1.1.1)
+  - CapacitorNetwork (7.0.4):
+    - Capacitor
+  - CapacitorSecureStoragePlugin (0.11.0):
+    - Capacitor
+    - SwiftKeychainWrapper
+  - CapacitorShare (7.0.4):
+    - Capacitor
+  - IONFilesystemLib (1.1.2)
+  - SQLCipher (4.10.0):
+    - SQLCipher/standard (= 4.10.0)
+  - SQLCipher/common (4.10.0)
+  - SQLCipher/standard (4.10.0):
+    - SQLCipher/common
+  - SwiftKeychainWrapper (4.0.1)
+  - ZIPFoundation (0.9.20)
+
+DEPENDENCIES:
+  - "Capacitor (from `../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@7.6.1/node_modules/@capacitor/app`)"
+  - "CapacitorCamera (from `../../../node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera`)"
+  - "CapacitorCommunitySqlite (from `../../../node_modules/.pnpm/@capacitor-community+sqlite@6.0.2_@capacitor+core@7.6.1/node_modules/@capacitor-community/sqlite`)"
+  - "CapacitorCordova (from `../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios`)"
+  - "CapacitorFilesystem (from `../../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@7.6.1/node_modules/@capacitor/filesystem`)"
+  - "CapacitorNetwork (from `../../../node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network`)"
+  - "CapacitorSecureStoragePlugin (from `../../../node_modules/.pnpm/capacitor-secure-storage-plugin@0.11.0_@capacitor+core@7.6.1/node_modules/capacitor-secure-storage-plugin`)"
+  - "CapacitorShare (from `../../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/share`)"
+
+SPEC REPOS:
+  trunk:
+    - IONFilesystemLib
+    - SQLCipher
+    - SwiftKeychainWrapper
+    - ZIPFoundation
+
+EXTERNAL SOURCES:
+  Capacitor:
+    :path: "../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios"
+  CapacitorApp:
+    :path: "../../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@7.6.1/node_modules/@capacitor/app"
+  CapacitorCamera:
+    :path: "../../../node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera"
+  CapacitorCommunitySqlite:
+    :path: "../../../node_modules/.pnpm/@capacitor-community+sqlite@6.0.2_@capacitor+core@7.6.1/node_modules/@capacitor-community/sqlite"
+  CapacitorCordova:
+    :path: "../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios"
+  CapacitorFilesystem:
+    :path: "../../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@7.6.1/node_modules/@capacitor/filesystem"
+  CapacitorNetwork:
+    :path: "../../../node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network"
+  CapacitorSecureStoragePlugin:
+    :path: "../../../node_modules/.pnpm/capacitor-secure-storage-plugin@0.11.0_@capacitor+core@7.6.1/node_modules/capacitor-secure-storage-plugin"
+  CapacitorShare:
+    :path: "../../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/share"
+
+SPEC CHECKSUMS:
+  Capacitor: d13cad5fa09155679672808cc4ca9fbc2997e1b4
+  CapacitorApp: f01a913211780e0718dae9750442c3e23f96e106
+  CapacitorCamera: 9e952270be355797f769aa835bb7643a96c871fe
+  CapacitorCommunitySqlite: 0299d20f4b00c2e6aa485a1d8932656753937b9b
+  CapacitorCordova: c07921bdcfec6f691bae22274446b4d606ebf6a4
+  CapacitorFilesystem: c63fc54df41e5a6761785a7f3c49dc696c22e296
+  CapacitorNetwork: b719d692a8d1310da8d26d6648d3aa1ef1e100e1
+  CapacitorSecureStoragePlugin: 450d402026ee3bcc018fa206504d9c0572fee78d
+  CapacitorShare: 25f7fc5dd0e4edbde5d6801c6de5d14a8b450a41
+  IONFilesystemLib: 21a63377696b2d8fab5632ecfb7d2ac67bddb68a
+  SQLCipher: eb79c64049cb002b4e9fcb30edb7979bf4706dfc
+  SwiftKeychainWrapper: 807ba1d63c33a7d0613288512399cd1eda1e470c
+  ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
+
+PODFILE CHECKSUM: fc225bc78f1071a9e161b89a7c09505e11b66e09
+
+COCOAPODS: 1.16.2

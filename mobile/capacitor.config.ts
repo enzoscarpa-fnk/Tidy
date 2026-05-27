@@ -7,10 +7,10 @@ const config: CapacitorConfig = {
 
   // Serveur de dev Nuxt (uniquement en développement local)
   // Commenter ce bloc pour un build de production
-  server: {
-    url: 'http://localhost:3001',
-    cleartext: true,
-  },
+//  server: {
+//    url: 'http://localhost:3001',
+//    cleartext: true,
+//  },
 
   plugins: {
     // @capacitor-community/sqlite : chiffrement AES-256 de la base locale

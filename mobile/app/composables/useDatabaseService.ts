@@ -237,17 +237,28 @@ export function useDatabaseService() {
         return
       }
 
-      const encryptionKey = await _getOrCreateEncryptionKey()
-      void encryptionKey
-
       _sqlite = new SQLiteConnection(CapacitorSQLite)
 
-      const { result: isAvailable } = await _sqlite.checkConnectionsConsistency()
-      if (!isAvailable) {
-        throw new Error('[DB] Connexions SQLite incohérentes détectées au démarrage.')
+      const encryptionKey = await _getOrCreateEncryptionKey()
+
+      try {
+        await _sqlite.setEncryptionSecret(encryptionKey)
+      } catch (err) {
+        const message = String((err as any)?.message ?? (err as any)?.errorMessage ?? err)
+        if (!message.includes('passphrase already stored in keychain')) {
+          throw err
+        }
       }
 
-      _db = await _sqlite.createConnection(DB_NAME, true, 'secret', DB_VERSION, false)
+      const consistency = (await _sqlite.checkConnectionsConsistency()).result
+      const hasConnection = (await _sqlite.isConnection(DB_NAME, false)).result
+
+      if (consistency && hasConnection) {
+        _db = await _sqlite.retrieveConnection(DB_NAME, false)
+      } else {
+        _db = await _sqlite.createConnection(DB_NAME, true, 'secret', DB_VERSION, false)
+      }
+
       await _db.open()
       await _runMigrations(_db)
 
