@@ -3,44 +3,52 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
 const mockDb = {
-  open: vi.fn().mockResolvedValue(undefined),
-  close: vi.fn().mockResolvedValue(undefined),
-  delete: vi.fn().mockResolvedValue(undefined),
+  open:    vi.fn().mockResolvedValue(undefined),
+  close:   vi.fn().mockResolvedValue(undefined),
+  delete:  vi.fn().mockResolvedValue(undefined),
   execute: vi.fn().mockResolvedValue(undefined),
-  run: vi.fn().mockResolvedValue(undefined),
-  query: vi.fn().mockResolvedValue({ values: [] }),
+  run:     vi.fn().mockResolvedValue(undefined),
+  query:   vi.fn().mockResolvedValue({ values: [] }),
 }
 
 const mockSqlite = {
-  checkConnectionsConsistency: vi.fn().mockResolvedValue({ result: true }),
-  createConnection: vi.fn().mockResolvedValue(mockDb),
-  closeConnection: vi.fn().mockResolvedValue(undefined),
+  // Appelé après _getOrCreateEncryptionKey()
+  setEncryptionSecret:          vi.fn().mockResolvedValue(undefined),
+  // Vérification cohérence des connexions existantes
+  checkConnectionsConsistency:  vi.fn().mockResolvedValue({ result: true }),
+  // Renvoie false → passe par createConnection (chemin nominal des tests)
+  isConnection:                 vi.fn().mockResolvedValue({ result: false }),
+  // Chemin alternatif : connexion déjà ouverte
+  retrieveConnection:           vi.fn().mockResolvedValue(mockDb),
+  // Chemin nominal
+  createConnection:             vi.fn().mockResolvedValue(mockDb),
+  // Fermeture propre
+  closeConnection:              vi.fn().mockResolvedValue(undefined),
 }
 
 vi.mock('@capacitor-community/sqlite', () => ({
   CapacitorSQLite: {},
-  SQLiteConnection: vi.fn().mockImplementation(() => mockSqlite),
+  SQLiteConnection:   vi.fn().mockImplementation(() => mockSqlite),
   SQLiteDBConnection: vi.fn(),
 }))
 
 vi.mock('@capacitor/core', () => ({
   Capacitor: {
     isNativePlatform: vi.fn().mockReturnValue(true),
-    getPlatform: vi.fn().mockReturnValue('ios'),
+    getPlatform:      vi.fn().mockReturnValue('ios'),
   },
 }))
 
 vi.mock('capacitor-secure-storage-plugin', () => ({
   SecureStoragePlugin: {
-    set: vi.fn(),
-    get: vi.fn().mockRejectedValue(new Error('not found')),
+    set:    vi.fn(),
+    get:    vi.fn().mockRejectedValue(new Error('not found')),
     remove: vi.fn(),
   },
 }))
 
 // ── Import après mocks ─────────────────────────────────────────────────────
 
-// Reset du singleton entre chaque test via réimport du module
 async function freshService() {
   vi.resetModules()
   const mod = await import('~/composables/useDatabaseService')
@@ -52,13 +60,19 @@ async function freshService() {
 describe('useDatabaseService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    // Rétablir les valeurs par défaut après clearAllMocks
+    // Rétablir toutes les valeurs après clearAllMocks
+    mockSqlite.setEncryptionSecret.mockResolvedValue(undefined)
     mockSqlite.checkConnectionsConsistency.mockResolvedValue({ result: true })
+    mockSqlite.isConnection.mockResolvedValue({ result: false })
+    mockSqlite.retrieveConnection.mockResolvedValue(mockDb)
     mockSqlite.createConnection.mockResolvedValue(mockDb)
+    mockSqlite.closeConnection.mockResolvedValue(undefined)
     mockDb.open.mockResolvedValue(undefined)
+    mockDb.close.mockResolvedValue(undefined)
+    mockDb.delete.mockResolvedValue(undefined)
     mockDb.execute.mockResolvedValue(undefined)
-    mockDb.query.mockResolvedValue({ values: [] })
     mockDb.run.mockResolvedValue(undefined)
+    mockDb.query.mockResolvedValue({ values: [] })
   })
 
   describe('initDatabase()', () => {
@@ -82,7 +96,7 @@ describe('useDatabaseService', () => {
     })
 
     it('applique les migrations manquantes (version 0 → 1)', async () => {
-      // Simuler une base vierge : schema_version absente
+      // Base vierge : schema_version absente
       mockDb.query.mockResolvedValueOnce({ values: [] })
 
       const { initDatabase } = await freshService()
@@ -96,15 +110,12 @@ describe('useDatabaseService', () => {
     })
 
     it('ne réapplique pas une migration déjà effectuée (idempotence migrations)', async () => {
-      // Simuler schema_version = 1 déjà en base
-      mockDb.query.mockResolvedValueOnce({
-        values: [{ value: '1' }],
-      })
+      // schema_version = 1 déjà en base → aucune migration pending
+      mockDb.query.mockResolvedValueOnce({ values: [{ value: '1' }] })
 
       const { initDatabase } = await freshService()
       await initDatabase()
 
-      // execute() ne doit PAS être appelé (aucune migration pending)
       expect(mockDb.execute).not.toHaveBeenCalled()
     })
 

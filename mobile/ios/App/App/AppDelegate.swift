@@ -6,32 +6,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    private let appGroupID = "group.be.studiofnk.tidy"
+    private let appGroupID    = "group.be.studiofnk.tidy"
     private let stagingFolder = "tidy_share_inbox"
 
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
     ) -> Bool {
-        syncShareInboxToDocuments()
+        drainShareInbox()
         return true
     }
 
-    func applicationWillResignActive(_ application: UIApplication) {
-    }
+    func applicationWillResignActive(_ application: UIApplication) {}
 
-    func applicationDidEnterBackground(_ application: UIApplication) {
-    }
+    func applicationDidEnterBackground(_ application: UIApplication) {}
 
     func applicationWillEnterForeground(_ application: UIApplication) {
-        syncShareInboxToDocuments()
+        // applicationWillEnterForeground est appelé AVANT applicationDidBecomeActive.
+        // Le drain ici garantit que les fichiers sont en place avant que le bridge
+        // Capacitor n'émette appStateChange { isActive: true } dans la WebView.
+        drainShareInbox()
     }
 
-    func applicationDidBecomeActive(_ application: UIApplication) {
-    }
+    func applicationDidBecomeActive(_ application: UIApplication) {}
 
-    func applicationWillTerminate(_ application: UIApplication) {
-    }
+    func applicationWillTerminate(_ application: UIApplication) {}
 
     func application(
         _ app: UIApplication,
@@ -53,8 +52,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         )
     }
 
-    private func syncShareInboxToDocuments() {
-        NSLog("[Tidy][ShareInbox] syncShareInboxToDocuments() appelé")
+    // ── Drain App Group → Library/tidy_share_inbox/ ───────────────────────────
+    //
+    // La ShareExtension écrit dans le App Group container (seul espace partagé
+    // entre l'extension et l'app principale).
+    // Capacitor Filesystem avec Directory.Library pointe vers Library/ du sandbox
+    // de l'app principale — inaccessible depuis l'extension.
+    // Ce drain est le seul pont possible entre les deux sandboxes.
+
+    private func drainShareInbox() {
+        NSLog("[Tidy][ShareInbox] drainShareInbox() appelé")
+
         let fileManager = FileManager.default
 
         guard let groupContainerURL = fileManager.containerURL(
@@ -64,56 +72,51 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
-        NSLog("[Tidy][ShareInbox] Group container : \(groupContainerURL.path)")
-
-        let sourceInboxURL = groupContainerURL.appendingPathComponent(stagingFolder, isDirectory: true)
-
-        guard let documentsRootURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            NSLog("[Tidy][ShareInbox] Dossier inbox App Group vide ou inexistant : \(sourceInboxURL.path)")
+        // Directory.Library côté Capacitor = Library/ du sandbox de l'app principale
+        guard let libraryURL = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first else {
+            NSLog("[Tidy][ShareInbox] ⛔ Library directory introuvable")
             return
         }
 
-        let destinationInboxURL = documentsRootURL.appendingPathComponent(stagingFolder, isDirectory: true)
+        let sourceURL = groupContainerURL.appendingPathComponent(stagingFolder, isDirectory: true)
+        let destURL   = libraryURL.appendingPathComponent(stagingFolder, isDirectory: true)
 
+        // Créer la destination si elle n'existe pas encore
         do {
-            try fileManager.createDirectory(
-                at: destinationInboxURL,
-                withIntermediateDirectories: true,
-                attributes: nil
-            )
+            try fileManager.createDirectory(at: destURL, withIntermediateDirectories: true)
         } catch {
-            print("[Tidy][ShareInbox] Impossible de créer le dossier Documents inbox: \(error)")
+            NSLog("[Tidy][ShareInbox] ⛔ Impossible de créer Library/\(stagingFolder) : \(error)")
             return
         }
 
-        guard fileManager.fileExists(atPath: sourceInboxURL.path) else {
+        guard fileManager.fileExists(atPath: sourceURL.path) else {
+            NSLog("[Tidy][ShareInbox] App Group inbox vide — rien à drainer")
             return
         }
 
-        let fileURLs: [URL]
+        let entries: [URL]
         do {
-            fileURLs = try fileManager.contentsOfDirectory(
-                at: sourceInboxURL,
+            entries = try fileManager.contentsOfDirectory(
+                at: sourceURL,
                 includingPropertiesForKeys: nil,
                 options: [.skipsHiddenFiles]
             )
         } catch {
-            print("[Tidy][ShareInbox] Impossible de lire le dossier App Group inbox: \(error)")
+            NSLog("[Tidy][ShareInbox] ⛔ Lecture App Group inbox impossible : \(error)")
             return
         }
 
-        for fileURL in fileURLs {
-            let destinationURL = destinationInboxURL.appendingPathComponent(fileURL.lastPathComponent)
-
+        for entry in entries {
+            let target = destURL.appendingPathComponent(entry.lastPathComponent)
             do {
-                if fileManager.fileExists(atPath: destinationURL.path) {
-                    try fileManager.removeItem(at: destinationURL)
+                if fileManager.fileExists(atPath: target.path) {
+                    try fileManager.removeItem(at: target)
                 }
-
-                try fileManager.copyItem(at: fileURL, to: destinationURL)
-                try fileManager.removeItem(at: fileURL)
+                // move (pas copy) : libère le App Group container immédiatement
+                try fileManager.moveItem(at: entry, to: target)
+                NSLog("[Tidy][ShareInbox] ✓ \(entry.lastPathComponent) → Library/\(stagingFolder)/")
             } catch {
-                print("[Tidy][ShareInbox] Échec du déplacement \(fileURL.lastPathComponent): \(error)")
+                NSLog("[Tidy][ShareInbox] ✗ Échec drain \(entry.lastPathComponent) : \(error)")
             }
         }
     }

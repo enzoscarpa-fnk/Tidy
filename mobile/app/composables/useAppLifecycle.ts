@@ -16,10 +16,9 @@ interface SharedInboxManifest {
   binaryFilename: string
 }
 
-const IOS_APP_GROUP_ID = 'group.be.studiofnk.tidy'
 const IOS_SHARE_STAGING_FOLDER = 'tidy_share_inbox'
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
-const ALLOWED_MIME_TYPES = new Set([
+const ALLOWED_MIME_TYPES = new Set<string>([
   'application/pdf',
   'image/jpeg',
   'image/png',
@@ -43,8 +42,9 @@ export function useAppLifecycle() {
       const networkStatus = await Network.getStatus()
 
       if (state.isActive) {
+        // AppDelegate.drainShareInbox() s'est exécuté dans applicationWillEnterForeground,
+        // donc les fichiers sont déjà dans Library/tidy_share_inbox/ à ce stade.
         await _resumePendingTasks(workspaceId)
-
         if (networkStatus.connected) {
           await onForeground()
         }
@@ -62,11 +62,11 @@ export function useAppLifecycle() {
     const effectiveWorkspaceId = _resolveWorkspaceId(workspaceId)
 
     if (!effectiveWorkspaceId) {
-      console.debug('[AppLifecycle] No workspace selected, skip pending tasks resume')
+      console.debug('[AppLifecycle] Pas de workspace sélectionné, tâches ignorées')
       return
     }
 
-    console.debug('[AppLifecycle] Resuming pending tasks for workspace:', effectiveWorkspaceId)
+    console.debug('[AppLifecycle] Reprise des tâches pour le workspace :', effectiveWorkspaceId)
 
     await _importPendingSharedFiles(effectiveWorkspaceId)
 
@@ -79,6 +79,8 @@ export function useAppLifecycle() {
     return workspaceStore.currentWorkspaceId || initialWorkspaceId || ''
   }
 
+  // ── Share inbox ─────────────────────────────────────────────────────────────
+
   async function _importPendingSharedFiles(workspaceId: string): Promise<void> {
     if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return
     if (_isImportingSharedFiles) return
@@ -86,18 +88,17 @@ export function useAppLifecycle() {
     _isImportingSharedFiles = true
 
     try {
-      const inboxEntries = await _listInboxEntries()
-      if (inboxEntries.length === 0) return
-
-      const manifests = inboxEntries
+      const allEntries = await _listInboxEntries()
+      const manifestNames = allEntries
         .filter((name) => name.endsWith('.manifest.json'))
         .sort()
 
-      if (manifests.length === 0) return
+      if (manifestNames.length === 0) return
 
       const documentStore = useDocumentStore()
+      let importedCount = 0
 
-      for (const manifestName of manifests) {
+      for (const manifestName of manifestNames) {
         try {
           const manifest = await _readManifest(manifestName)
 
@@ -107,13 +108,13 @@ export function useAppLifecycle() {
           }
 
           if (!ALLOWED_MIME_TYPES.has(manifest.mimeType)) {
-            console.warn('[AppLifecycle] Unsupported shared MIME type:', manifest.mimeType)
+            console.warn('[AppLifecycle] Type MIME non supporté, ignoré :', manifest.mimeType)
             await _cleanupImportedFiles(manifest)
             continue
           }
 
           if (manifest.fileSizeBytes > MAX_FILE_SIZE_BYTES) {
-            console.warn('[AppLifecycle] Shared file too large:', manifest.filename)
+            console.warn('[AppLifecycle] Fichier trop lourd, ignoré :', manifest.filename)
             await _cleanupImportedFiles(manifest)
             continue
           }
@@ -121,8 +122,22 @@ export function useAppLifecycle() {
           const file = await _readSharedBinaryAsFile(manifest)
           await documentStore.uploadDocument(workspaceId, file)
           await _cleanupImportedFiles(manifest)
-        } catch (error) {
-          console.warn('[AppLifecycle] Failed to import shared file:', manifestName, error)
+          importedCount++
+        } catch (err) {
+          // Pas de cleanup en cas d'erreur : le fichier sera retenté au prochain foreground
+          console.warn('[AppLifecycle] Échec import :', manifestName, err)
+        }
+      }
+
+      if (importedCount > 0) {
+        // Le document est sur le backend (status UPLOADED) mais pas encore en SQLite.
+        // fetchDocuments va le rendre visible immédiatement ; startPolling gère
+        // les transitions de statut jusqu'à ENRICHED.
+        try {
+          await documentStore.fetchDocuments(workspaceId)
+          documentStore.startPolling(workspaceId)
+        } catch (err) {
+          console.warn('[AppLifecycle] Rafraîchissement post-import échoué :', err)
         }
       }
     } finally {
@@ -136,10 +151,7 @@ export function useAppLifecycle() {
         path: IOS_SHARE_STAGING_FOLDER,
         directory: Directory.Library,
       })
-
-      return result.files.map((entry) =>
-        typeof entry === 'string' ? entry : entry.name
-      )
+      return result.files.map((e) => (typeof e === 'string' ? e : e.name))
     } catch {
       return []
     }
@@ -152,11 +164,10 @@ export function useAppLifecycle() {
         directory: Directory.Library,
         encoding: Encoding.UTF8,
       })
-
       const raw = typeof result.data === 'string' ? result.data : ''
       return JSON.parse(raw) as SharedInboxManifest
-    } catch (error) {
-      console.warn('[AppLifecycle] Unable to read manifest:', filename, error)
+    } catch (err) {
+      console.warn('[AppLifecycle] Lecture manifest impossible :', filename, err)
       return null
     }
   }
@@ -170,28 +181,22 @@ export function useAppLifecycle() {
     const base64 = typeof result.data === 'string' ? result.data : ''
     const bytes = _base64ToUint8Array(base64)
 
-    const arrayBuffer = new ArrayBuffer(bytes.length)
-    new Uint8Array(arrayBuffer).set(bytes)
+    const buffer = new ArrayBuffer(bytes.length)
+    new Uint8Array(buffer).set(bytes)
 
-    return new File([arrayBuffer], manifest.filename, {
+    return new File([buffer], manifest.filename, {
       type: manifest.mimeType,
       lastModified: Date.now(),
     })
   }
 
-
   function _base64ToUint8Array(base64: string): Uint8Array {
-    const normalized = base64.includes(',')
-      ? base64.substring(base64.indexOf(',') + 1)
-      : base64
-
-    const binary = atob(normalized)
+    const data = base64.includes(',') ? base64.substring(base64.indexOf(',') + 1) : base64
+    const binary = atob(data)
     const bytes = new Uint8Array(binary.length)
-
-    for (let i = 0; i < binary.length; i += 1) {
+    for (let i = 0; i < binary.length; i++) {
       bytes[i] = binary.charCodeAt(i)
     }
-
     return bytes
   }
 
@@ -211,14 +216,18 @@ export function useAppLifecycle() {
     }
   }
 
+  // ── OCR ─────────────────────────────────────────────────────────────────────
+
   async function _suspendOcrQueue(): Promise<void> {
     const db = useDatabaseService()
     await db.execute(
       `UPDATE documents SET ocrstatus = 'pending' WHERE ocrstatus = 'processing'`,
       []
     )
-    console.debug('[AppLifecycle] OCR queue suspended')
+    console.debug('[AppLifecycle] Queue OCR suspendue')
   }
+
+  // ── Public ──────────────────────────────────────────────────────────────────
 
   function destroy(): void {
     _listenerHandle?.()
