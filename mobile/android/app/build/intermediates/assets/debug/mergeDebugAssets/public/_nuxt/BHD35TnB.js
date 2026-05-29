@@ -1,0 +1,1 @@
+import{aq as c,ad as p,y as t,ar as n}from"./CNYch4d4.js";const w=c(async o=>{let a,r;const e=p(),s=o.params.workspaceId;if(!s||typeof s!="string")return t("/");if(e.workspaces.length===0&&([a,r]=n(()=>e.fetchWorkspaces()),await a,r()),!e.getWorkspaceById(s))return t("/");e.setCurrentWorkspace(s)});export{w as default};

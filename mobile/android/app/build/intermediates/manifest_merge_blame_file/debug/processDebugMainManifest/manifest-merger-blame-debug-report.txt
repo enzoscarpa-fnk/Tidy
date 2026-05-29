@@ -1,0 +1,231 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.tidy.app"
+4    android:versionCode="1"
+5    android:versionName="1.0" >
+6
+7    <uses-sdk
+8        android:minSdkVersion="23"
+9        android:targetSdkVersion="35" />
+10    <!-- Permissions -->
+11    <uses-permission android:name="android.permission.INTERNET" />
+11-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:54:3-65
+11-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:54:20-62
+12
+13    <queries>
+13-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-11:15
+14        <intent>
+14-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:8:9-10:18
+15            <action android:name="android.media.action.IMAGE_CAPTURE" />
+15-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:13-73
+15-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:21-70
+16        </intent>
+17    </queries>
+18
+19    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+19-->[:capacitor-network] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-79
+19-->[:capacitor-network] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:22-76
+20    <uses-permission android:name="android.permission.USE_BIOMETRIC" /> <!-- suppress DeprecatedClassUsageInspection -->
+20-->[androidx.biometric:biometric:1.1.0] /Users/fnk/.gradle/caches/8.13/transforms/b9eb2801a895c3d5e13e2a76b38790f3/transformed/biometric-1.1.0/AndroidManifest.xml:24:5-72
+20-->[androidx.biometric:biometric:1.1.0] /Users/fnk/.gradle/caches/8.13/transforms/b9eb2801a895c3d5e13e2a76b38790f3/transformed/biometric-1.1.0/AndroidManifest.xml:24:22-69
+21    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
+21-->[androidx.biometric:biometric:1.1.0] /Users/fnk/.gradle/caches/8.13/transforms/b9eb2801a895c3d5e13e2a76b38790f3/transformed/biometric-1.1.0/AndroidManifest.xml:27:5-74
+21-->[androidx.biometric:biometric:1.1.0] /Users/fnk/.gradle/caches/8.13/transforms/b9eb2801a895c3d5e13e2a76b38790f3/transformed/biometric-1.1.0/AndroidManifest.xml:27:22-71
+22
+23    <permission
+23-->[androidx.core:core:1.15.0] /Users/fnk/.gradle/caches/8.13/transforms/8c5ecfb14d553977df4eeee880227eae/transformed/core-1.15.0/AndroidManifest.xml:22:5-24:47
+24        android:name="com.tidy.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+24-->[androidx.core:core:1.15.0] /Users/fnk/.gradle/caches/8.13/transforms/8c5ecfb14d553977df4eeee880227eae/transformed/core-1.15.0/AndroidManifest.xml:23:9-81
+25        android:protectionLevel="signature" />
+25-->[androidx.core:core:1.15.0] /Users/fnk/.gradle/caches/8.13/transforms/8c5ecfb14d553977df4eeee880227eae/transformed/core-1.15.0/AndroidManifest.xml:24:9-44
+26
+27    <uses-permission android:name="com.tidy.app.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+27-->[androidx.core:core:1.15.0] /Users/fnk/.gradle/caches/8.13/transforms/8c5ecfb14d553977df4eeee880227eae/transformed/core-1.15.0/AndroidManifest.xml:26:5-97
+27-->[androidx.core:core:1.15.0] /Users/fnk/.gradle/caches/8.13/transforms/8c5ecfb14d553977df4eeee880227eae/transformed/core-1.15.0/AndroidManifest.xml:26:22-94
+28
+29    <application
+29-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:3:3-52:17
+30        android:allowBackup="true"
+30-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:4:5-31
+31        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+31-->[androidx.core:core:1.15.0] /Users/fnk/.gradle/caches/8.13/transforms/8c5ecfb14d553977df4eeee880227eae/transformed/core-1.15.0/AndroidManifest.xml:28:18-86
+32        android:debuggable="true"
+33        android:extractNativeLibs="false"
+34        android:icon="@mipmap/ic_launcher"
+34-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:5:5-39
+35        android:label="@string/app_name"
+35-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:6:5-37
+36        android:networkSecurityConfig="@xml/network_security_config"
+36-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:7:5-65
+37        android:roundIcon="@mipmap/ic_launcher_round"
+37-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:8:5-50
+38        android:supportsRtl="true"
+38-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:9:5-31
+39        android:testOnly="true"
+40        android:theme="@style/AppTheme" >
+40-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:10:5-36
+41        <activity
+41-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:11:5-42:16
+42            android:name="com.tidy.app.MainActivity"
+42-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:13:7-35
+43            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+43-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:12:7-134
+44            android:exported="true"
+44-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:17:7-30
+45            android:label="@string/title_activity_main"
+45-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:14:7-50
+46            android:launchMode="singleTask"
+46-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:16:7-38
+47            android:theme="@style/AppTheme.NoActionBarLaunch" >
+47-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:15:7-56
+48
+49            <!-- Launcher -->
+50            <intent-filter>
+50-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:20:7-23:23
+51                <action android:name="android.intent.action.MAIN" />
+51-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:21:9-61
+51-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:21:17-58
+52
+53                <category android:name="android.intent.category.LAUNCHER" />
+53-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:22:9-69
+53-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:22:19-66
+54            </intent-filter>
+55
+56            <!-- Réception de fichiers partagés depuis d'autres apps (Ticket 13.4) -->
+57            <intent-filter>
+57-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:26:7-30:23
+58                <action android:name="android.intent.action.SEND" />
+58-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:27:9-61
+58-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:27:17-58
+59
+60                <category android:name="android.intent.category.DEFAULT" />
+60-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:28:9-68
+60-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:28:19-65
+61
+62                <data android:mimeType="application/pdf" />
+62-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:29:9-52
+62-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:29:15-49
+63            </intent-filter>
+64            <intent-filter>
+64-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:31:7-35:23
+65                <action android:name="android.intent.action.SEND" />
+65-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:27:9-61
+65-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:27:17-58
+66
+67                <category android:name="android.intent.category.DEFAULT" />
+67-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:28:9-68
+67-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:28:19-65
+68
+69                <data android:mimeType="image/jpeg" />
+69-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:29:9-52
+69-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:29:15-49
+70            </intent-filter>
+71            <intent-filter>
+71-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:36:7-40:23
+72                <action android:name="android.intent.action.SEND" />
+72-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:27:9-61
+72-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:27:17-58
+73
+74                <category android:name="android.intent.category.DEFAULT" />
+74-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:28:9-68
+74-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:28:19-65
+75
+76                <data android:mimeType="image/png" />
+76-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:29:9-52
+76-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:29:15-49
+77            </intent-filter>
+78        </activity>
+79
+80        <provider
+81            android:name="androidx.core.content.FileProvider"
+81-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:44:7-56
+82            android:authorities="com.tidy.app.fileprovider"
+82-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:45:7-58
+83            android:exported="false"
+83-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:46:7-31
+84            android:grantUriPermissions="true" >
+84-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:47:7-41
+85            <meta-data
+85-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:48:7-50:56
+86                android:name="android.support.FILE_PROVIDER_PATHS"
+86-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:49:9-59
+87                android:resource="@xml/file_paths" />
+87-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:50:9-43
+88        </provider>
+89        <provider
+89-->[androidx.emoji2:emoji2:1.3.0] /Users/fnk/.gradle/caches/8.13/transforms/e84d6444ba3404b5145dc3a2ce97494a/transformed/emoji2-1.3.0/AndroidManifest.xml:24:9-32:20
+90            android:name="androidx.startup.InitializationProvider"
+90-->[androidx.emoji2:emoji2:1.3.0] /Users/fnk/.gradle/caches/8.13/transforms/e84d6444ba3404b5145dc3a2ce97494a/transformed/emoji2-1.3.0/AndroidManifest.xml:25:13-67
+91            android:authorities="com.tidy.app.androidx-startup"
+91-->[androidx.emoji2:emoji2:1.3.0] /Users/fnk/.gradle/caches/8.13/transforms/e84d6444ba3404b5145dc3a2ce97494a/transformed/emoji2-1.3.0/AndroidManifest.xml:26:13-68
+92            android:exported="false" >
+92-->[androidx.emoji2:emoji2:1.3.0] /Users/fnk/.gradle/caches/8.13/transforms/e84d6444ba3404b5145dc3a2ce97494a/transformed/emoji2-1.3.0/AndroidManifest.xml:27:13-37
+93            <meta-data
+93-->[androidx.emoji2:emoji2:1.3.0] /Users/fnk/.gradle/caches/8.13/transforms/e84d6444ba3404b5145dc3a2ce97494a/transformed/emoji2-1.3.0/AndroidManifest.xml:29:13-31:52
+94                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+94-->[androidx.emoji2:emoji2:1.3.0] /Users/fnk/.gradle/caches/8.13/transforms/e84d6444ba3404b5145dc3a2ce97494a/transformed/emoji2-1.3.0/AndroidManifest.xml:30:17-75
+95                android:value="androidx.startup" />
+95-->[androidx.emoji2:emoji2:1.3.0] /Users/fnk/.gradle/caches/8.13/transforms/e84d6444ba3404b5145dc3a2ce97494a/transformed/emoji2-1.3.0/AndroidManifest.xml:31:17-49
+96            <meta-data
+96-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/fnk/.gradle/caches/8.13/transforms/847fe10693c8794ce8ec934a659dc433/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:29:13-31:52
+97                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+97-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/fnk/.gradle/caches/8.13/transforms/847fe10693c8794ce8ec934a659dc433/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:30:17-78
+98                android:value="androidx.startup" />
+98-->[androidx.lifecycle:lifecycle-process:2.6.2] /Users/fnk/.gradle/caches/8.13/transforms/847fe10693c8794ce8ec934a659dc433/transformed/lifecycle-process-2.6.2/AndroidManifest.xml:31:17-49
+99            <meta-data
+99-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:29:13-31:52
+100                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+100-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:30:17-85
+101                android:value="androidx.startup" />
+101-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:31:17-49
+102        </provider>
+103
+104        <receiver
+104-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:34:9-52:20
+105            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+105-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:35:13-76
+106            android:directBootAware="false"
+106-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:36:13-44
+107            android:enabled="true"
+107-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:37:13-35
+108            android:exported="true"
+108-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:38:13-36
+109            android:permission="android.permission.DUMP" >
+109-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:39:13-57
+110            <intent-filter>
+110-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:40:13-42:29
+111                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+111-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:17-91
+111-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:41:25-88
+112            </intent-filter>
+113            <intent-filter>
+113-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:43:13-45:29
+114                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+114-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:17-85
+114-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:44:25-82
+115            </intent-filter>
+116            <intent-filter>
+116-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:46:13-48:29
+117                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+117-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:17-88
+117-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:47:25-85
+118            </intent-filter>
+119            <intent-filter>
+119-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:49:13-51:29
+120                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+120-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:17-95
+120-->[androidx.profileinstaller:profileinstaller:1.3.1] /Users/fnk/.gradle/caches/8.13/transforms/a1d2ce16faa4be78e69464cd3733ad5a/transformed/profileinstaller-1.3.1/AndroidManifest.xml:50:25-92
+121            </intent-filter>
+122        </receiver>
+123
+124        <service
+124-->[androidx.room:room-runtime:2.6.1] /Users/fnk/.gradle/caches/8.13/transforms/786ccf0d29c503a463082fc7fa6f43a8/transformed/room-runtime-2.6.1/AndroidManifest.xml:24:9-28:63
+125            android:name="androidx.room.MultiInstanceInvalidationService"
+125-->[androidx.room:room-runtime:2.6.1] /Users/fnk/.gradle/caches/8.13/transforms/786ccf0d29c503a463082fc7fa6f43a8/transformed/room-runtime-2.6.1/AndroidManifest.xml:25:13-74
+126            android:directBootAware="true"
+126-->[androidx.room:room-runtime:2.6.1] /Users/fnk/.gradle/caches/8.13/transforms/786ccf0d29c503a463082fc7fa6f43a8/transformed/room-runtime-2.6.1/AndroidManifest.xml:26:13-43
+127            android:exported="false" />
+127-->[androidx.room:room-runtime:2.6.1] /Users/fnk/.gradle/caches/8.13/transforms/786ccf0d29c503a463082fc7fa6f43a8/transformed/room-runtime-2.6.1/AndroidManifest.xml:27:13-37
+128    </application>
+129
+130</manifest>

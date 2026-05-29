@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GradleSettings">
+    <option name="linkedExternalProjectsSettings">
+      <GradleProjectSettings>
+        <option name="testRunner" value="CHOOSE_PER_TEST" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/capacitor-cordova-android-plugins" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/@capacitor+android@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/android/capacitor" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@7.6.1/node_modules/@capacitor/app/android" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@7.6.1/node_modules/@capacitor/filesystem/android" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network/android" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/share/android" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/@capacitor-community+sqlite@6.0.2_@capacitor+core@7.6.1/node_modules/@capacitor-community/sqlite/android" />
+            <option value="$PROJECT_DIR$/../../node_modules/.pnpm/capacitor-secure-storage-plugin@0.11.0_@capacitor+core@7.6.1/node_modules/capacitor-secure-storage-plugin/android" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+    </option>
+  </component>
+</project>
