@@ -521,11 +521,11 @@
   Dans `AndroidManifest.xml` : déclarer `intent-filter` avec `action.SEND` pour MIME types `application/pdf`, `image/jpeg`, `image/png`. Dans l'activité principale : lire l'intent, copier le fichier dans le sandbox app, déclencher l'import via `useSyncService`.
   **Ref :** `03-technical-design-document.md §2.4 Android`
 
-- [ ] **Ticket 13.5 — LogService local (SQLite)**
+- [x] **Ticket 13.5 — LogService local (SQLite)**
   Créer `composables/useLogService.ts`. Écrire dans la table `local_logs` (DDL dans Phase 10). Niveaux : debug/info/warn/error. Contextes : OCR/SYNC/CRYPTO/SHARE/UI. Purge auto des logs > 7 jours. **Les logs ne quittent jamais le device.**
   **Ref :** `03-technical-design-document.md §11.1`
 
-- [ ] **Ticket 13.6 — Sentry SDK Capacitor**
+- [x] **Ticket 13.6 — Sentry SDK Capacitor**
   Installer `@sentry/capacitor`. Configurer dans `app.vue` `onMounted` avec le DSN Sentry. **Exclure explicitement** `ocr_text` et `original_filename` des breadcrumbs (RGPD). Tester la remontée d'une erreur de test.
   **Ref :** `03-technical-design-document.md §11.3`
 

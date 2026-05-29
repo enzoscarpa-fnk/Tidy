@@ -1,3 +1,22 @@
 packages:
   - 'backend'
   - 'mobile'
+allowBuilds:
+  '@parcel/watcher': set this to true or false
+  '@prisma/client': set this to true or false
+  '@prisma/engines': set this to true or false
+  '@sentry/capacitor': set this to true or false
+  bcrypt: set this to true or false
+  esbuild: set this to true or false
+  prisma: set this to true or false
+  sharp: set this to true or false
+  unrs-resolver: set this to true or false
+  vue-demi: set this to true or false
+minimumReleaseAgeExclude:
+  - '@sentry-internal/browser-utils@10.55.0'
+  - '@sentry-internal/feedback@10.55.0'
+  - '@sentry-internal/replay-canvas@10.55.0'
+  - '@sentry-internal/replay@10.55.0'
+  - '@sentry/browser@10.55.0'
+  - '@sentry/core@10.55.0'
+  - '@sentry/vue@10.55.0'

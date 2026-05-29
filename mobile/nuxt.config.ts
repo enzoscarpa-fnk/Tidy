@@ -35,6 +35,7 @@ export default defineNuxtConfig({
     public: {
       // apiBaseUrl: 'http://localhost:3000/api/v1',
       apiBaseUrl: 'http://192.168.68.50:3000/api/v1',
+      sentryDsn: process.env.SENTRY_DSN ?? ''
     },
   },
 
