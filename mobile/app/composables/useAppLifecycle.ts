@@ -16,7 +16,8 @@ interface SharedInboxManifest {
   binaryFilename: string
 }
 
-const IOS_SHARE_STAGING_FOLDER = 'tidy_share_inbox'
+const IOS_SHARE_STAGING_FOLDER     = 'tidy_share_inbox'
+const ANDROID_SHARE_STAGING_FOLDER = 'tidy_share_inbox'
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024
 const ALLOWED_MIME_TYPES = new Set<string>([
   'application/pdf',
@@ -42,8 +43,6 @@ export function useAppLifecycle() {
       const networkStatus = await Network.getStatus()
 
       if (state.isActive) {
-        // AppDelegate.drainShareInbox() s'est exécuté dans applicationWillEnterForeground,
-        // donc les fichiers sont déjà dans Library/tidy_share_inbox/ à ce stade.
         await _resumePendingTasks(workspaceId)
         if (networkStatus.connected) {
           await onForeground()
@@ -81,8 +80,19 @@ export function useAppLifecycle() {
 
   // ── Share inbox ─────────────────────────────────────────────────────────────
 
+  /**
+   * Retourne le Directory Capacitor adapté à la plateforme.
+   *
+   * iOS   → Directory.Library  (AppDelegate draine depuis App Group vers Library/)
+   * Android → Directory.Data   (MainActivity écrit dans getFilesDir())
+   */
+  function _getInboxDirectory(): Directory {
+    return Capacitor.getPlatform() === 'ios' ? Directory.Library : Directory.Data
+  }
+
   async function _importPendingSharedFiles(workspaceId: string): Promise<void> {
-    if (!Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'ios') return
+    // Guard : uniquement sur device natif iOS ou Android
+    if (!Capacitor.isNativePlatform()) return
     if (_isImportingSharedFiles) return
 
     _isImportingSharedFiles = true
@@ -130,9 +140,6 @@ export function useAppLifecycle() {
       }
 
       if (importedCount > 0) {
-        // Le document est sur le backend (status UPLOADED) mais pas encore en SQLite.
-        // fetchDocuments va le rendre visible immédiatement ; startPolling gère
-        // les transitions de statut jusqu'à ENRICHED.
         try {
           await documentStore.fetchDocuments(workspaceId)
           documentStore.startPolling(workspaceId)
@@ -149,7 +156,7 @@ export function useAppLifecycle() {
     try {
       const result = await Filesystem.readdir({
         path: IOS_SHARE_STAGING_FOLDER,
-        directory: Directory.Library,
+        directory: _getInboxDirectory(),
       })
       return result.files.map((e) => (typeof e === 'string' ? e : e.name))
     } catch {
@@ -161,7 +168,7 @@ export function useAppLifecycle() {
     try {
       const result = await Filesystem.readFile({
         path: `${IOS_SHARE_STAGING_FOLDER}/${filename}`,
-        directory: Directory.Library,
+        directory: _getInboxDirectory(),
         encoding: Encoding.UTF8,
       })
       const raw = typeof result.data === 'string' ? result.data : ''
@@ -175,7 +182,7 @@ export function useAppLifecycle() {
   async function _readSharedBinaryAsFile(manifest: SharedInboxManifest): Promise<File> {
     const result = await Filesystem.readFile({
       path: `${IOS_SHARE_STAGING_FOLDER}/${manifest.binaryFilename}`,
-      directory: Directory.Library,
+      directory: _getInboxDirectory(),
     })
 
     const base64 = typeof result.data === 'string' ? result.data : ''
@@ -208,8 +215,8 @@ export function useAppLifecycle() {
   async function _deleteInboxFileIfExists(filename: string): Promise<void> {
     try {
       await Filesystem.deleteFile({
-        path: `${IOS_SHARE_STAGING_FOLDER}/${filename}`,
-        directory: Directory.Library,
+        path: `${ANDROID_SHARE_STAGING_FOLDER}/${filename}`,
+        directory: _getInboxDirectory(),
       })
     } catch {
       // no-op
@@ -221,7 +228,7 @@ export function useAppLifecycle() {
   async function _suspendOcrQueue(): Promise<void> {
     const db = useDatabaseService()
     await db.execute(
-      `UPDATE documents SET ocrstatus = 'pending' WHERE ocrstatus = 'processing'`,
+      `UPDATE documents SET ocr_status = 'pending' WHERE ocr_status = 'processing'`,
       []
     )
     console.debug('[AppLifecycle] Queue OCR suspendue')

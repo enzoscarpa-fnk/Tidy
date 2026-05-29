@@ -97,8 +97,10 @@ describe('useSyncService', () => {
     it('devrait appeler GET /documents/sync?since et upserter chaque document reçu', async () => {
       const cloudDocs = [makeCloudDoc(), makeCloudDoc({ id: 'doc-cloud-2' })]
       mockRequest.mockResolvedValue({
-        cloudDocs,
-        meta: { serverTimestamp: '2026-05-19T12:00:00.000Z' },
+        data: {
+          documents: cloudDocs,
+          server_timestamp: '2026-05-19T12:00:00.000Z',
+        },
       })
 
       const { pullFromCloud } = useSyncService()
@@ -151,15 +153,19 @@ describe('useSyncService', () => {
       const cloudDoc = makeCloudDoc({ updatedat: serverUpdatedAt })
 
       mockRequest.mockResolvedValue({
-        data: [cloudDoc],
-        meta: { serverTimestamp: new Date(serverUpdatedAt).toISOString() },
+        data: {
+          documents: [cloudDoc],
+          server_timestamp: new Date(serverUpdatedAt).toISOString(),
+        },
       })
 
       // upsertDocumentFromCloud gère LWW en interne (Blueprint R19)
       const { pullFromCloud } = useSyncService()
       await pullFromCloud('ws-1')
 
-      expect(mockLocalRepo.upsertDocumentFromCloud).toHaveBeenCalledWith(cloudDoc)
+      expect(mockLocalRepo.upsertDocumentFromCloud).toHaveBeenCalledWith(
+        expect.objectContaining({ id: cloudDoc.id })
+      )
     })
   })
 

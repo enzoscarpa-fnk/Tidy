@@ -59,7 +59,7 @@ export async function buildApp(): Promise<TidyApp> {
   // ── CORS ──────────────────────────────────────────────────────────────────
   await app.register(cors, {
     origin: isDev
-      ? ['http://localhost:3001', 'capacitor://localhost', 'http://localhost']
+      ? ['http://localhost:3001', 'capacitor://localhost', 'http://localhost', 'https://localhost']
       : (process.env['ALLOWED_ORIGINS'] ?? '').split(',').filter(Boolean),
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],

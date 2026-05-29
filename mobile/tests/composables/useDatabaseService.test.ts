@@ -84,7 +84,11 @@ describe('useDatabaseService', () => {
         'tidy', true, 'secret', 1, false
       )
       expect(mockDb.open).toHaveBeenCalledOnce()
-      expect(mockDb.execute).toHaveBeenCalledOnce()
+      expect(mockDb.run).toHaveBeenCalled()
+      expect(mockDb.run).toHaveBeenLastCalledWith(
+        expect.stringContaining('schema_version'),
+        ['1']
+      )
     })
 
     it('est idempotent — un second appel ne réouvre pas la connexion', async () => {
@@ -102,8 +106,8 @@ describe('useDatabaseService', () => {
       const { initDatabase } = await freshService()
       await initDatabase()
 
-      expect(mockDb.execute).toHaveBeenCalledOnce()
-      expect(mockDb.run).toHaveBeenCalledWith(
+      expect(mockDb.run).toHaveBeenCalledTimes(15)
+      expect(mockDb.run).toHaveBeenLastCalledWith(
         expect.stringContaining('schema_version'),
         ['1']
       )
@@ -116,7 +120,7 @@ describe('useDatabaseService', () => {
       const { initDatabase } = await freshService()
       await initDatabase()
 
-      expect(mockDb.execute).not.toHaveBeenCalled()
+      expect(mockDb.run).not.toHaveBeenCalled()
     })
 
     it('ne s\'initialise pas sur la plateforme web', async () => {

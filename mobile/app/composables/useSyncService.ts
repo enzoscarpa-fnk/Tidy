@@ -19,19 +19,24 @@ export function useSyncService() {
       const url = `/documents/sync?since=${sinceEncoded}&workspaceId=${workspaceId}`
 
       const res = await request<{
-        data: any[] | null
-        meta: { serverTimestamp: string }
+        data: {
+          documents:        any[]
+          server_timestamp: string
+        }
       }>(url)
 
-      const docs: any[] | null = res?.data ?? (res as any)?.cloudDocs ?? null
-      if (!docs) return
+      const docs = res?.data?.documents
+      if (!docs || !Array.isArray(docs)) return
 
       for (const cloudDoc of docs) {
-        await localRepo.upsertDocumentFromCloud(cloudDoc)
+        await localRepo.upsertDocumentFromCloud({
+          ...cloudDoc,
+          clientUpdatedAt: cloudDoc.updatedAt,
+        })
       }
 
-      if (res?.meta?.serverTimestamp) {
-        await db.setAppState(`lastSyncAt_${workspaceId}`, res.meta.serverTimestamp)
+      if (res?.data?.server_timestamp) {
+        await db.setAppState(`lastSyncAt_${workspaceId}`, res.data.server_timestamp)
       }
     } catch (err) {
       console.warn('[SyncService] pullFromCloud error:', err)

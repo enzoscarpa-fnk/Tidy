@@ -54,7 +54,7 @@ vi.mock('@capacitor/filesystem', () => ({
     readFile:   mockFilesystemReadFile,
     deleteFile: mockFilesystemDeleteFile,
   },
-  Directory: { Library: 'LIBRARY' },
+  Directory: { Library: 'LIBRARY', Data: 'DATA' },
   Encoding:  { UTF8: 'utf8' },
 }))
 
@@ -160,7 +160,7 @@ describe('useAppLifecycle', () => {
     await new Promise((r) => setTimeout(r, 10))
 
     expect(mockDbExecute).toHaveBeenCalledWith(
-      expect.stringContaining("ocrstatus = 'pending'"),
+      expect.stringContaining("ocr_status = 'pending'"),
       [],
     )
   })
@@ -198,8 +198,8 @@ describe('useAppLifecycle', () => {
       mockCapacitorPlatform.mockReturnValue('ios')
     })
 
-    it('ne fait rien si la plateforme n\'est pas iOS', async () => {
-      mockCapacitorPlatform.mockReturnValue('android')
+    it('ne fait rien sur plateforme web (non-native)', async () => {
+      mockCapacitorIsNative.mockReturnValue(false)
       mockFilesystemReaddir.mockResolvedValue({ files: ['uuid-1.manifest.json'] })
 
       const { init } = useAppLifecycle()
@@ -207,6 +207,25 @@ describe('useAppLifecycle', () => {
 
       expect(mockFilesystemReaddir).not.toHaveBeenCalled()
       expect(mockUploadDocument).not.toHaveBeenCalled()
+    })
+
+    it('utilise Directory.Data sur Android', async () => {
+      mockCapacitorIsNative.mockReturnValue(true)
+      mockCapacitorPlatform.mockReturnValue('android')
+      mockFilesystemReaddir.mockResolvedValue({
+        files: ['uuid-1.manifest.json', 'uuid-1.pdf'],
+      })
+      mockFilesystemReadFile
+        .mockResolvedValueOnce({ data: makeManifestJson() })
+        .mockResolvedValueOnce({ data: FAKE_BASE64 })
+
+      const { init } = useAppLifecycle()
+      await init('ws-1', vi.fn(), vi.fn())
+
+      expect(mockFilesystemReaddir).toHaveBeenCalledWith(
+        expect.objectContaining({ directory: 'DATA' })
+      )
+      expect(mockUploadDocument).toHaveBeenCalledOnce()
     })
 
     it('ne fait rien si l\'inbox est vide', async () => {

@@ -2,8 +2,8 @@ import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacito
 
 // ── Constantes ─────────────────────────────────────────────────────────────
 
-const DB_NAME = 'tidy'
-const DB_VERSION = 1
+const DB_NAME                  = 'tidy'
+const DB_VERSION               = 1
 const ENCRYPTION_KEY_STORAGE_KEY = 'tidy_db_encryption_key'
 
 // ── Singleton ──────────────────────────────────────────────────────────────
@@ -13,20 +13,24 @@ let _sqlite: SQLiteConnection | null = null
 let _db: SQLiteDBConnection | null = null
 let _initialized = false
 
-// ── DDL complet ────────────────────────────────────────────────────────────
+// ── DDL — un statement par entrée ─────────────────────────────────────────
+//
+// execute() sur Android split sur les ';' et casse les triggers (BEGIN...END
+// contient des ';' internes). On utilise db.run() statement par statement.
 
-const MIGRATIONS: { version: number; sql: string }[] = [
+const MIGRATIONS: { version: number; statements: string[] }[] = [
   {
     version: 1,
-    sql: `
-      -- ── app_state : config locale et curseur de sync ─────────────────────
-      CREATE TABLE IF NOT EXISTS app_state (
+    statements: [
+
+      // ── app_state ───────────────────────────────────────────────────────
+      `CREATE TABLE IF NOT EXISTS app_state (
         key   TEXT PRIMARY KEY NOT NULL,
         value TEXT NOT NULL
-      );
+      )`,
 
-      -- ── documents : cache local du Document aggregate ────────────────────
-      CREATE TABLE IF NOT EXISTS documents (
+      // ── documents ───────────────────────────────────────────────────────
+      `CREATE TABLE IF NOT EXISTS documents (
         id                     TEXT PRIMARY KEY NOT NULL,
         workspace_id           TEXT NOT NULL,
         title                  TEXT NOT NULL,
@@ -37,46 +41,38 @@ const MIGRATIONS: { version: number; sql: string }[] = [
         thumbnail_url          TEXT,
         local_path             TEXT,
         cloud_key              TEXT,
-
-        -- DocumentIntelligence (READ-ONLY, pipeline auto)
         detected_type          TEXT,
-        suggested_tags         TEXT,   -- JSON array
+        suggested_tags         TEXT,
         global_confidence      REAL,
-        extracted_entities     TEXT,   -- JSON array
-
-        -- DocumentMetadata (éditable utilisateur)
-        user_tags              TEXT    NOT NULL DEFAULT '[]', -- JSON array
+        extracted_entities     TEXT,
+        user_tags              TEXT NOT NULL DEFAULT '[]',
         notes                  TEXT,
         user_override_type     TEXT,
         last_edited_at         TEXT,
-
-        -- Texte extrait (FTS source)
         extracted_text         TEXT,
         text_extraction_method TEXT,
         page_count             INTEGER,
-
-        -- Sync & timestamps
-        ocr_status             TEXT    NOT NULL DEFAULT 'none',
-        sync_status            TEXT    NOT NULL DEFAULT 'pending',
-        uploaded_at            TEXT    NOT NULL,
-        updated_at             TEXT    NOT NULL,
-        client_updated_at      TEXT    NOT NULL,
+        ocr_status             TEXT NOT NULL DEFAULT 'none',
+        sync_status            TEXT NOT NULL DEFAULT 'pending',
+        uploaded_at            TEXT NOT NULL,
+        updated_at             TEXT NOT NULL,
+        client_updated_at      TEXT NOT NULL,
         is_deleted             INTEGER NOT NULL DEFAULT 0
-      );
+      )`,
 
-      -- ── Index sur documents ───────────────────────────────────────────────
-      CREATE INDEX IF NOT EXISTS idx_documents_workspace
-        ON documents (workspace_id, is_deleted, updated_at DESC);
+      // ── Index documents ─────────────────────────────────────────────────
+      `CREATE INDEX IF NOT EXISTS idx_documents_workspace
+        ON documents (workspace_id, is_deleted, updated_at DESC)`,
 
-      CREATE INDEX IF NOT EXISTS idx_documents_sync_status
-        ON documents (sync_status, is_deleted);
+      `CREATE INDEX IF NOT EXISTS idx_documents_sync_status
+        ON documents (sync_status, is_deleted)`,
 
-      CREATE INDEX IF NOT EXISTS idx_documents_ocr_status
+      `CREATE INDEX IF NOT EXISTS idx_documents_ocr_status
         ON documents (ocr_status)
-        WHERE ocr_status = 'pending';
+        WHERE ocr_status = 'pending'`,
 
-      -- ── FTS5 : recherche plein texte locale ───────────────────────────────
-      CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts
+      // ── FTS5 ────────────────────────────────────────────────────────────
+      `CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts
         USING fts5(
           id UNINDEXED,
           title,
@@ -86,44 +82,47 @@ const MIGRATIONS: { version: number; sql: string }[] = [
           content=documents,
           content_rowid=rowid,
           tokenize='unicode61 remove_diacritics 1'
-        );
+        )`,
 
-      -- ── Triggers FTS5 ────────────────────────────────────────────────────
-      CREATE TRIGGER IF NOT EXISTS documents_fts_insert
-        AFTER INSERT ON documents BEGIN
+      // ── Triggers FTS5 ───────────────────────────────────────────────────
+      `CREATE TRIGGER IF NOT EXISTS documents_fts_insert
+        AFTER INSERT ON documents
+        BEGIN
           INSERT INTO documents_fts (rowid, id, title, extracted_text, user_tags, notes)
           VALUES (new.rowid, new.id, new.title, new.extracted_text, new.user_tags, new.notes);
-        END;
+        END`,
 
-      CREATE TRIGGER IF NOT EXISTS documents_fts_update
-        AFTER UPDATE ON documents BEGIN
+      `CREATE TRIGGER IF NOT EXISTS documents_fts_update
+        AFTER UPDATE ON documents
+        BEGIN
           INSERT INTO documents_fts (documents_fts, rowid, id, title, extracted_text, user_tags, notes)
           VALUES ('delete', old.rowid, old.id, old.title, old.extracted_text, old.user_tags, old.notes);
           INSERT INTO documents_fts (rowid, id, title, extracted_text, user_tags, notes)
           VALUES (new.rowid, new.id, new.title, new.extracted_text, new.user_tags, new.notes);
-        END;
+        END`,
 
-      CREATE TRIGGER IF NOT EXISTS documents_fts_delete
-        AFTER DELETE ON documents BEGIN
+      `CREATE TRIGGER IF NOT EXISTS documents_fts_delete
+        AFTER DELETE ON documents
+        BEGIN
           INSERT INTO documents_fts (documents_fts, rowid, id, title, extracted_text, user_tags, notes)
           VALUES ('delete', old.rowid, old.id, old.title, old.extracted_text, old.user_tags, old.notes);
-        END;
+        END`,
 
-      -- ── share_links ───────────────────────────────────────────────────────
-      CREATE TABLE IF NOT EXISTS share_links (
-        id            TEXT PRIMARY KEY NOT NULL,
-        document_id   TEXT NOT NULL REFERENCES documents (id) ON DELETE CASCADE,
-        token         TEXT NOT NULL UNIQUE,
-        expires_at    TEXT NOT NULL,
-        is_revoked    INTEGER NOT NULL DEFAULT 0,
-        created_at    TEXT NOT NULL
-      );
+      // ── share_links ─────────────────────────────────────────────────────
+      `CREATE TABLE IF NOT EXISTS share_links (
+        id          TEXT PRIMARY KEY NOT NULL,
+        document_id TEXT NOT NULL REFERENCES documents (id) ON DELETE CASCADE,
+        token       TEXT NOT NULL UNIQUE,
+        expires_at  TEXT NOT NULL,
+        is_revoked  INTEGER NOT NULL DEFAULT 0,
+        created_at  TEXT NOT NULL
+      )`,
 
-      CREATE INDEX IF NOT EXISTS idx_share_links_document
-        ON share_links (document_id);
+      `CREATE INDEX IF NOT EXISTS idx_share_links_document
+        ON share_links (document_id)`,
 
-      -- ── sync_log : journal des opérations en attente ──────────────────────
-      CREATE TABLE IF NOT EXISTS sync_log (
+      // ── sync_log ────────────────────────────────────────────────────────
+      `CREATE TABLE IF NOT EXISTS sync_log (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
         document_id   TEXT NOT NULL,
         operation     TEXT NOT NULL,
@@ -131,22 +130,22 @@ const MIGRATIONS: { version: number; sql: string }[] = [
         error_message TEXT,
         created_at    TEXT NOT NULL DEFAULT (datetime('now')),
         updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
-      );
+      )`,
 
-      CREATE INDEX IF NOT EXISTS idx_sync_log_pending
+      `CREATE INDEX IF NOT EXISTS idx_sync_log_pending
         ON sync_log (status, operation)
-        WHERE status = 'pending';
+        WHERE status = 'pending'`,
 
-      -- ── local_logs ────────────────────────────────────────────────────────
-      CREATE TABLE IF NOT EXISTS local_logs (
+      // ── local_logs ──────────────────────────────────────────────────────
+      `CREATE TABLE IF NOT EXISTS local_logs (
         id         INTEGER PRIMARY KEY AUTOINCREMENT,
         level      TEXT    NOT NULL,
         context    TEXT    NOT NULL,
         message    TEXT    NOT NULL,
         payload    TEXT,
         created_at TEXT    NOT NULL DEFAULT (datetime('now'))
-      );
-    `,
+      )`,
+    ],
   },
 ]
 
@@ -195,9 +194,9 @@ async function _setSchemaVersion(db: SQLiteDBConnection, version: number): Promi
 async function _runMigrations(db: SQLiteDBConnection): Promise<void> {
   const currentVersion = await _getSchemaVersion(db)
 
-  const pending = MIGRATIONS.filter((m) => m.version > currentVersion).sort(
-    (a, b) => a.version - b.version
-  )
+  const pending = MIGRATIONS
+    .filter((m) => m.version > currentVersion)
+    .sort((a, b) => a.version - b.version)
 
   if (pending.length === 0) {
     if (import.meta.dev) console.info(`[DB] Schéma à jour (v${currentVersion})`)
@@ -206,7 +205,13 @@ async function _runMigrations(db: SQLiteDBConnection): Promise<void> {
 
   for (const migration of pending) {
     if (import.meta.dev) console.info(`[DB] Migration v${migration.version} en cours…`)
-    await db.execute(migration.sql)
+
+    // run() exécute un statement complet — supporte les triggers BEGIN...END
+    // contrairement à execute() qui split sur ';' et casse les triggers sur Android
+    for (const statement of migration.statements) {
+      await db.run(statement, [])
+    }
+
     await _setSchemaVersion(db, migration.version)
     if (import.meta.dev) console.info(`[DB] Migration v${migration.version} appliquée ✓`)
   }
@@ -215,15 +220,12 @@ async function _runMigrations(db: SQLiteDBConnection): Promise<void> {
 // ── API publique ───────────────────────────────────────────────────────────
 
 export function useDatabaseService() {
-  // _getDb est une fonction helper interne au composable
   function _getDb(): SQLiteDBConnection {
     if (!_db || !_initialized) {
       throw new Error('[DB] Base non initialisée. Appeler initDatabase() au démarrage.')
     }
     return _db
   }
-
-  // ── Cycle de vie ──────────────────────────────────────────────────────────
 
   async function initDatabase(): Promise<void> {
     if (_initialized) return
@@ -245,12 +247,15 @@ export function useDatabaseService() {
         await _sqlite.setEncryptionSecret(encryptionKey)
       } catch (err) {
         const message = String((err as any)?.message ?? (err as any)?.errorMessage ?? err)
-        if (!message.includes('passphrase already stored in keychain')) {
+        const isAlreadySet =
+          message.includes('passphrase already stored in keychain') || // iOS Keychain
+          message.includes('a passphrase has already been set')        // Android Keystore
+        if (!isAlreadySet) {
           throw err
         }
       }
 
-      const consistency = (await _sqlite.checkConnectionsConsistency()).result
+      const consistency   = (await _sqlite.checkConnectionsConsistency()).result
       const hasConnection = (await _sqlite.isConnection(DB_NAME, false)).result
 
       if (consistency && hasConnection) {
@@ -285,7 +290,7 @@ export function useDatabaseService() {
       _isReady.value = false
       if (import.meta.dev) console.info('[DB] Connexion SQLite fermée proprement.')
     } catch (err) {
-      console.error('[DB] Erreur fermeture SQLite :', err)
+      console.error('[DB] Fermeture SQLite :', err)
     }
   }
 
@@ -303,21 +308,14 @@ export function useDatabaseService() {
     _sqlite = null
     _initialized = false
     _isReady.value = false
-    if (import.meta.dev) console.info('[DB] Base supprimée et clé de chiffrement effacée.')
+    if (import.meta.dev) console.info('[DB] Base supprimée et clé effacée.')
   }
-
-  // ── execute : accès SQL brut (utilisé par useAppLifecycle._suspendOcrQueue) ──
 
   async function execute(statement: string, values: unknown[] = []): Promise<void> {
     const db = _getDb()
     await db.execute(statement)
-    // Note : CapacitorSQLite.execute() n'accepte pas de paramètres liés —
-    // les valeurs sont ignorées si la requête n'en a pas besoin.
-    // Pour des requêtes paramétrées, utiliser run() à la place.
     void values
   }
-
-  // ── app_state ─────────────────────────────────────────────────────────────
 
   async function getAppState(key: string): Promise<string | null> {
     const db = _getDb()
@@ -336,8 +334,6 @@ export function useDatabaseService() {
       [key, value]
     )
   }
-
-  // ── sync_log ──────────────────────────────────────────────────────────────
 
   async function addSyncLogEntry(
     documentId: string,
@@ -390,8 +386,6 @@ export function useDatabaseService() {
     return result.values ?? []
   }
 
-  // ── Return ────────────────────────────────────────────────────────────────
-
   return {
     isReady: readonly(_isReady),
     initDatabase,
@@ -399,10 +393,8 @@ export function useDatabaseService() {
     getDatabase,
     closeDatabase,
     resetDatabase,
-    // app_state
     getAppState,
     setAppState,
-    // sync_log
     addSyncLogEntry,
     getPendingSyncLogEntries,
     updateSyncLogEntry,
