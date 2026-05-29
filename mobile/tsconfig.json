@@ -13,4 +13,5 @@
   "vueCompilerOptions": {
     "plugins": []
   },
+  "exclude": ["nuxt.config.ts"]
 }
