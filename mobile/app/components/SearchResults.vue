@@ -77,8 +77,19 @@ function handleDocumentClick(item: SearchResultItem): void {
   <div class="flex flex-col h-full">
 
     <!-- Header : barre de recherche -->
-    <div class="px-4 pt-4 pb-2 bg-white border-b border-tidy-border">
+    <div class="flex items-center gap-2 px-3 pt-4 pb-2 bg-white border-b border-tidy-border">
+      <button
+        type="button"
+        class="flex items-center justify-center w-9 h-9 rounded-full hover:bg-tidy-surface transition-colors flex-shrink-0"
+        aria-label="Retour"
+        @click="router.back()"
+      >
+        <svg class="w-5 h-5 text-tidy-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
       <SearchBar
+        class="flex-1"
         :initial-query="searchStore.query || initialQuery"
         autofocus
         @search="handleSearch"

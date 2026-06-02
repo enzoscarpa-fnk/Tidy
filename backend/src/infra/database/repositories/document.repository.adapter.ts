@@ -23,6 +23,20 @@ import type { MetadataJson }    from '../../../modules/document/domain/document-
 import { DocumentIntelligence } from '../../../modules/document/domain/document-intelligence.value-object';
 import type { IntelligenceJson, DetectedType } from '../../../modules/document/domain/document-intelligence.value-object';
 
+/**
+ * Transforme une query utilisateur en expression tsquery avec wildcard prefix.
+ * "fact adobe" → "fact:* & adobe:*"
+ * Permet de trouver "facture" en tapant "fact".
+ */
+function toWildcardTsquery(query: string): string {
+  return query
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(term => `${term.replace(/[^\w]/g, '')}:*`)
+    .join(' & ')
+}
+
 // ── Type interne pour les résultats FTS (d.* + headline + rank) ───────────────
 
 export class DocumentRepositoryAdapter implements IDocumentRepository {
@@ -182,7 +196,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
 
     if (filters.query) {
       conditions.push(
-        Prisma.sql`d."search_vector" @@ websearch_to_tsquery('simple', ${filters.query})`,
+        Prisma.sql`d."search_vector" @@ to_tsquery('simple', ${toWildcardTsquery(filters.query!)})`,
       );
     }
 
@@ -199,7 +213,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const sortDir = Prisma.raw(filters.sortOrder === 'asc' ? 'ASC' : 'DESC');
 
     const orderBy = filters.query
-      ? Prisma.sql`ts_rank(d."search_vector", websearch_to_tsquery('simple', ${filters.query})) DESC`
+      ? Prisma.sql`ts_rank(d."search_vector", to_tsquery('simple', ${toWildcardTsquery(filters.query!)})) DESC`
       : Prisma.sql`d.${sortCol} ${sortDir}`;
 
     const [rows, countRows] = await Promise.all([
@@ -379,7 +393,7 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const conditions: Prisma.Sql[] = [
       Prisma.sql`d."workspaceId" = ${filters.workspaceId}::uuid`,
       Prisma.sql`d."isDeleted"   = false`,
-      Prisma.sql`d."search_vector" @@ websearch_to_tsquery('simple', ${filters.query})`,
+      Prisma.sql`d."search_vector" @@ to_tsquery('simple', ${toWildcardTsquery(filters.query)})`,
     ];
 
     if (filters.detectedType?.length) {
@@ -439,10 +453,10 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
                ts_headline(
                  'simple',
                  COALESCE(NULLIF(d."extractedText", ''), d.title, ''),
-                 websearch_to_tsquery('simple', ${filters.query}),
+                 to_tsquery('simple', ${toWildcardTsquery(filters.query)}),
                  'MaxWords=35, MinWords=15, StartSel=<b>, StopSel=</b>, HighlightAll=false'
                )                                                                            AS headline,
-               ts_rank(d."search_vector", websearch_to_tsquery('simple', ${filters.query})) AS rank
+               ts_rank(d."search_vector", to_tsquery('simple', ${toWildcardTsquery(filters.query)})) AS rank
         FROM "documents" d
         WHERE ${where}
         ORDER BY rank DESC
