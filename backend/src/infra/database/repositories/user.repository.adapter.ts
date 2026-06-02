@@ -7,7 +7,6 @@ export class UserRepositoryAdapter implements IUserRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   // ── Mapping Prisma → Domain ──────────────────────────────────────────────
-
   private toDomain(row: PrismaUser): User {
     return new User(
       row.id,
@@ -22,7 +21,6 @@ export class UserRepositoryAdapter implements IUserRepository {
   }
 
   // ── Lecture ──────────────────────────────────────────────────────────────
-
   async findByEmail(email: string): Promise<User | null> {
     const row = await this.prisma.user.findUnique({ where: { email } });
     return row ? this.toDomain(row) : null;
@@ -34,17 +32,14 @@ export class UserRepositoryAdapter implements IUserRepository {
   }
 
   // ── Écriture ─────────────────────────────────────────────────────────────
-
   async create(data: CreateUserData): Promise<User> {
     const row = await this.prisma.user.create({
-    data: {
-      email: data.email,
+      data: {
+        email: data.email,
         passwordHash: data.passwordHash,
-      displayName: data.displayName,
-      // tier, status : valeurs par défaut FREE / ACTIVE gérées par Prisma
-      // updatedAt : géré automatiquement via @updatedAt dans le schéma
-    },
-  });
+        displayName: data.displayName,
+      },
+    });
     return this.toDomain(row);
   }
 
@@ -52,14 +47,19 @@ export class UserRepositoryAdapter implements IUserRepository {
     await this.prisma.user.update({
       where: { id },
       data: { tier },
-    // updatedAt mis à jour automatiquement via @updatedAt
-  });
+    });
   }
 
   async updateDisplayName(id: string, displayName: string): Promise<void> {
     await this.prisma.user.update({
       where: { id },
       data: { displayName },
-  });
+    });
+  }
+
+  async delete(id: string): Promise<void> {
+    // La suppression cascade sur les documents, workspaces, refresh tokens
+    // via ON DELETE CASCADE défini dans le schéma Prisma
+    await this.prisma.user.delete({ where: { id } });
   }
 }

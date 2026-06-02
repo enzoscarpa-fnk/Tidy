@@ -9,6 +9,7 @@ const workspaceStore = useWorkspaceStore()
 const documentStore = useDocumentStore()
 const route = useRoute()
 const router = useRouter()
+const authStore = useAuthStore()
 
 // ── Workspace courant ──────────────────────────────────────────────────────
 const workspaceId = computed(() => route.params.workspaceId as string)
@@ -16,13 +17,6 @@ const workspaceId = computed(() => route.params.workspaceId as string)
 // ── Actions de la page ─────────────────────────────────────────────────────
 function navigateToUpload(): void {
   router.push(`/workspace/${workspaceId.value}/upload`)
-}
-
-async function handleRefresh(): Promise<void> {
-  await documentStore.fetchDocuments(workspaceId.value)
-  if (documentStore.hasDocumentsPending) {
-    documentStore.startPolling(workspaceId.value)
-  }
 }
 
 // ── SearchBar navigue vers /search ──────────────────────────────
@@ -53,28 +47,18 @@ function handleSearch(query: string): void {
           @search="handleSearch"
         />
 
-        <!-- Bouton Actualiser — discret, icône seule -->
+        <!-- Bouton Profil → /profile -->
         <button
           type="button"
-          class="flex-shrink-0 rounded-lg p-2 text-tidy-text-secondary transition-colors hover:bg-tidy-surface-overlay hover:text-tidy-text-primary"
-          :class="{ 'pointer-events-none opacity-40': documentStore.isLoading }"
-          aria-label="Actualiser la liste"
-          :disabled="documentStore.isLoading"
-          @click="handleRefresh"
+          class="flex-shrink-0 rounded-full p-0.5 ring-2 ring-tidy-border transition-colors hover:ring-tidy-primary"
+          aria-label="Mon profil"
+          @click="router.push('/profile')"
         >
-          <svg
-            class="h-5 w-5 transition-transform"
-            :class="{ 'animate-spin': documentStore.isLoading }"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fill-rule="evenodd"
-              d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.989a.75.75 0 00-.75.75v4.242a.75.75 0 001.5 0v-2.43l.31.31a7 7 0 0011.712-3.138.75.75 0 00-1.449-.39zm1.23-3.723a.75.75 0 00.219-.53V2.929a.75.75 0 00-1.5 0V5.36l-.31-.31A7 7 0 003.239 8.188a.75.75 0 101.448.389A5.5 5.5 0 0113.89 6.11l.311.31h-2.432a.75.75 0 000 1.5h4.243a.75.75 0 00.53-.219z"
-              clip-rule="evenodd"
-            />
-          </svg>
+          <div class="flex h-7 w-7 items-center justify-center rounded-full bg-tidy-primary/10">
+            <span class="text-xs font-bold text-tidy-primary">
+              {{ authStore.user?.displayName?.charAt(0)?.toUpperCase() ?? '?' }}
+            </span>
+          </div>
         </button>
       </div>
     </header>

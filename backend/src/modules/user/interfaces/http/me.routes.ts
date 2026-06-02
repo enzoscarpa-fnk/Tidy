@@ -38,7 +38,7 @@ const meRoutes: FastifyPluginAsync = async (fastify) => {
           id:          user.id,
           email:       user.email,
           displayName: user.displayName,
-          tier:        user.tier.toLowerCase(),   // "FREE" → "free" (contrat API)
+          tier:        user.tier.toLowerCase(),
           createdAt:   user.createdAt,
         }),
       );
@@ -53,7 +53,6 @@ const meRoutes: FastifyPluginAsync = async (fastify) => {
     handler: async (request, reply) => {
       const { displayName } = request.body;
 
-      // Body vide → rien à faire, retourner le profil actuel
       const user = await userRepo.findById(request.user.sub);
       if (!user) throw new UserNotFoundError();
 
@@ -61,7 +60,6 @@ const meRoutes: FastifyPluginAsync = async (fastify) => {
         await userRepo.updateDisplayName(user.id, displayName.trim());
       }
 
-      // Recharger le profil mis à jour
       const updated = await userRepo.findById(request.user.sub);
       if (!updated) throw new UserNotFoundError();
 
@@ -74,6 +72,22 @@ const meRoutes: FastifyPluginAsync = async (fastify) => {
           createdAt:   updated.createdAt,
         }),
       );
+    },
+  });
+
+  // ── DELETE /api/v1/me ───────────────────────────────────────────────────────
+
+  fastify.delete('/me', {
+    onRequest: [authenticate],
+    handler: async (request, reply) => {
+      const user = await userRepo.findById(request.user.sub);
+      if (!user) throw new UserNotFoundError();
+
+      // Suppression cascade : documents, workspaces, refresh tokens
+      // via ON DELETE CASCADE du schéma Prisma
+      await userRepo.delete(user.id);
+
+      return reply.status(204).send();
     },
   });
 };

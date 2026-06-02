@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { UserRepositoryAdapter } from '../../../../infra/database/repositories/user.repository.adapter';
 import { RefreshTokenRepositoryAdapter } from '../../../../infra/database/repositories/refresh-token.repository.adapter';
 import { AuthService } from '../../application/auth.service';
+import { authenticate } from '../../../../shared/plugins/authenticate.hook';
 import {
   EmailAlreadyExistsError,
   InvalidCredentialsError,
@@ -215,6 +216,16 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
           },
         }),
       );
+    },
+  });
+
+  // ── POST /api/v1/auth/logout ──────────────────────────────────────────────
+
+  fastify.post('/logout', {
+    preHandler: [authenticate],
+    handler: async (request, reply) => {
+      await refreshTokenRepo.revokeAllForUser(request.user.sub);
+      return reply.status(204).send();
     },
   });
 };

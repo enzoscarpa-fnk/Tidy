@@ -146,6 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
       }).catch(() => {})
     }
     await _clearTokens()
+    await navigateTo('/auth/login')
   }
 
   async function fetchProfile(): Promise<void> {

@@ -57,6 +57,43 @@ async function handleRetry(): Promise<void> {
   }
 }
 
+// ── Pull-to-refresh ────────────────────────────────────────────────────────
+const isPulling = ref(false)
+const pullStartY = ref(0)
+const pullDistance = ref(0)
+const PULL_THRESHOLD = 72 // px avant déclenchement
+
+function onTouchStart(e: TouchEvent): void {
+  // Seulement si on est en haut de la liste
+  if (window.scrollY === 0) {
+    pullStartY.value = e.touches[0]?.clientY ?? 0
+  }
+}
+
+function onTouchMove(e: TouchEvent): void {
+  if (!pullStartY.value) return
+  const delta = (e.touches[0]?.clientY ?? 0) - pullStartY.value
+  if (delta > 0 && window.scrollY === 0) {
+    pullDistance.value = Math.min(delta * 0.5, PULL_THRESHOLD + 20) // résistance
+  }
+}
+
+async function onTouchEnd(): Promise<void> {
+  if (pullDistance.value >= PULL_THRESHOLD && !isPulling.value) {
+    isPulling.value = true
+    try {
+      await documentStore.fetchDocuments(props.workspaceId, props.filters)
+      if (documentStore.hasDocumentsPending) {
+        documentStore.startPolling(props.workspaceId, props.filters)
+      }
+    } finally {
+      isPulling.value = false
+    }
+  }
+  pullDistance.value = 0
+  pullStartY.value = 0
+}
+
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 
 onMounted(async () => {
@@ -93,7 +130,32 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <section aria-label="Liste des documents" class="flex flex-col gap-2">
+  <section
+    aria-label="Liste des documents"
+    class="flex flex-col gap-2"
+    @touchstart.passive="onTouchStart"
+    @touchmove.passive="onTouchMove"
+    @touchend.passive="onTouchEnd"
+  >
+
+    <!-- ── Pull-to-refresh indicator ──────────────────────────────────────── -->
+    <div
+      class="flex items-center justify-center overflow-hidden transition-all duration-200 ease-out"
+      :style="{ height: `${pullDistance}px`, opacity: pullDistance / PULL_THRESHOLD }"
+      aria-hidden="true"
+    >
+      <svg
+        class="h-5 w-5 text-tidy-text-tertiary transition-transform duration-200"
+        :class="{ 'animate-spin': isPulling }"
+        :style="{ transform: `rotate(${(pullDistance / PULL_THRESHOLD) * 180}deg)` }"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+    </div>
 
     <!-- ── État : chargement initial ──────────────────────────────────────── -->
     <SkeletonLoader
