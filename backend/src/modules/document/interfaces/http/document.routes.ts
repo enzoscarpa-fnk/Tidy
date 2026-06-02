@@ -306,7 +306,29 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
       const s3Key      = `documents/${workspaceId}/${documentId}.${ext}`;
       const now        = new Date();
 
-      await s3.putObject(s3Key, fileBuffer, mimeType);
+      // await s3.putObject(s3Key, fileBuffer, mimeType);
+
+      request.log.info({
+        workspaceId,
+        originalFilename,
+        mimeType,
+        size: fileBuffer.length,
+        s3Key,
+      }, 'Starting S3 upload');
+
+      try {
+        await s3.putObject(s3Key, fileBuffer, mimeType);
+        request.log.info({ s3Key }, 'S3 upload completed');
+      } catch (error) {
+        request.log.error({
+          err: error,
+          s3Key,
+          mimeType,
+          size: fileBuffer.length,
+        }, 'S3 upload failed');
+
+        throw error;
+      }
 
       await documentRepo.create({
         id:               documentId,

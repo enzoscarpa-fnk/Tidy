@@ -505,27 +505,27 @@
 
 > **Objectif** : scan caméra, détection de bords, import depuis apps tierces (share extension).
 
-- [ ] **Ticket 13.1 — Page /scan + Capacitor Camera**
+- [x] **Ticket 13.1 — Page /scan + Capacitor Camera**
   Créer `pages/workspace/[workspaceId]/scan.vue`. Utiliser `@capacitor/camera` `getPhoto({ source: CameraSource.Camera, resultType: CameraResultType.Base64 })`. Afficher la photo capturée. Valider le format. Convertir en File + appeler `documentStore.uploadDocument()`.
   **Ref :** `03-technical-design-document.md §2.3` · `08-ui-component-blueprint.md §2.2`
 
-- [ ] **Ticket 13.2 — Détection de bords (OpenCV.js / Dynamsoft)**
+- [x] **Ticket 13.2 — Détection de bords (OpenCV.js / Dynamsoft)**
   Intégrer `opencv.js` (chargé lazily). Sur la page scan : après capture, passer l'image dans le détecteur de bords. Afficher des points de contrôle ajustables. Permettre le recadrage manuel avant confirmation. Appliquer la transformation perspective.
   **Ref :** `03-technical-design-document.md §2.3 Option A`
 
-- [ ] **Ticket 13.3 — iOS Share Extension**
+- [x] **Ticket 13.3 — iOS Share Extension**
   Dans le projet Xcode : créer une Share Extension target. Configurer `App Group` partagé entre l'extension et l'app principale. Handler : copier le fichier reçu dans le group container. Dans `useAppLifecycle.ts` : au foreground, vérifier le group container et importer automatiquement les fichiers en attente.
   **Ref :** `03-technical-design-document.md §2.4 iOS`
 
-- [ ] **Ticket 13.4 — Android Intent Filter**
+- [x] **Ticket 13.4 — Android Intent Filter**
   Dans `AndroidManifest.xml` : déclarer `intent-filter` avec `action.SEND` pour MIME types `application/pdf`, `image/jpeg`, `image/png`. Dans l'activité principale : lire l'intent, copier le fichier dans le sandbox app, déclencher l'import via `useSyncService`.
   **Ref :** `03-technical-design-document.md §2.4 Android`
 
-- [ ] **Ticket 13.5 — LogService local (SQLite)**
+- [x] **Ticket 13.5 — LogService local (SQLite)**
   Créer `composables/useLogService.ts`. Écrire dans la table `local_logs` (DDL dans Phase 10). Niveaux : debug/info/warn/error. Contextes : OCR/SYNC/CRYPTO/SHARE/UI. Purge auto des logs > 7 jours. **Les logs ne quittent jamais le device.**
   **Ref :** `03-technical-design-document.md §11.1`
 
-- [ ] **Ticket 13.6 — Sentry SDK Capacitor**
+- [x] **Ticket 13.6 — Sentry SDK Capacitor**
   Installer `@sentry/capacitor`. Configurer dans `app.vue` `onMounted` avec le DSN Sentry. **Exclure explicitement** `ocr_text` et `original_filename` des breadcrumbs (RGPD). Tester la remontée d'une erreur de test.
   **Ref :** `03-technical-design-document.md §11.3`
 
