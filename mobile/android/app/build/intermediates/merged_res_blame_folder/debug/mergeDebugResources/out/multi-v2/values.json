@@ -205,23 +205,6 @@
                     }
                 },
                 {
-                    "source": "/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+android@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/android/capacitor/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml",
-                    "from": {
-                        "startLines": "2,3,4,5",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "100,175,251,331",
-                        "endColumns": "74,75,79,79",
-                        "endOffsets": "170,246,326,406"
-                    },
-                    "to": {
-                        "startLines": "614,615,616,2105",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "31728,31803,31879,150462",
-                        "endColumns": "74,75,79,79",
-                        "endOffsets": "31798,31874,31954,150537"
-                    }
-                },
-                {
                     "source": "/Users/fnk/.gradle/caches/8.13/transforms/90054dc648eeb88f2fe2fb0a552468e3/transformed/startup-runtime-1.1.1/res/values/values.xml",
                     "from": {
                         "startLines": "2",
@@ -310,6 +293,23 @@
                         "endLines": "2153,2158,2161",
                         "endColumns": "12,12,12",
                         "endOffsets": "154571,154820,154971"
+                    }
+                },
+                {
+                    "source": "/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+android@8.3.4_@capacitor+core@8.3.4/node_modules/@capacitor/android/capacitor/build/intermediates/packaged_res/debug/packageDebugResources/values/values.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "100,175,251,331",
+                        "endColumns": "74,75,79,79",
+                        "endOffsets": "170,246,326,406"
+                    },
+                    "to": {
+                        "startLines": "614,615,616,2105",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "31728,31803,31879,150462",
+                        "endColumns": "74,75,79,79",
+                        "endOffsets": "31798,31874,31954,150537"
                     }
                 },
                 {

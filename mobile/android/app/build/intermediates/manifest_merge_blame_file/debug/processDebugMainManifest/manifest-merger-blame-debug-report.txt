@@ -13,18 +13,18 @@
 11-->/Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/mobile/android/app/src/main/AndroidManifest.xml:54:20-62
 12
 13    <queries>
-13-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-11:15
+13-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@8.3.4/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-11:15
 14        <intent>
-14-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:8:9-10:18
+14-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@8.3.4/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:8:9-10:18
 15            <action android:name="android.media.action.IMAGE_CAPTURE" />
-15-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:13-73
-15-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:21-70
+15-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@8.3.4/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:13-73
+15-->[:capacitor-camera] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@8.3.4/node_modules/@capacitor/camera/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:9:21-70
 16        </intent>
 17    </queries>
 18
 19    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-19-->[:capacitor-network] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-79
-19-->[:capacitor-network] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:22-76
+19-->[:capacitor-network] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@8.3.4/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:5-79
+19-->[:capacitor-network] /Users/fnk/Documents/IFOSUP 25-26/TFE/Tidy/node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@8.3.4/node_modules/@capacitor/network/android/build/intermediates/merged_manifest/debug/processDebugManifest/AndroidManifest.xml:7:22-76
 20    <uses-permission android:name="android.permission.USE_BIOMETRIC" /> <!-- suppress DeprecatedClassUsageInspection -->
 20-->[androidx.biometric:biometric:1.1.0] /Users/fnk/.gradle/caches/8.13/transforms/b9eb2801a895c3d5e13e2a76b38790f3/transformed/biometric-1.1.0/AndroidManifest.xml:24:5-72
 20-->[androidx.biometric:biometric:1.1.0] /Users/fnk/.gradle/caches/8.13/transforms/b9eb2801a895c3d5e13e2a76b38790f3/transformed/biometric-1.1.0/AndroidManifest.xml:24:22-69

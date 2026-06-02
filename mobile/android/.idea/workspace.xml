@@ -4,7 +4,191 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8ed5661c-fd49-4b83-a8ec-0f82424a8b64" name="Changes" comment="" />
+    <list default="true" id="8ed5661c-fd49-4b83-a8ec-0f82424a8b64" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../tests/pages/workspace/scan.nuxt.test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.13/executionHistory/executionHistory.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.13/executionHistory/executionHistory.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.13/executionHistory/executionHistory.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.13/executionHistory/executionHistory.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.13/fileHashes/fileHashes.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.13/fileHashes/fileHashes.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.13/fileHashes/fileHashes.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.13/fileHashes/fileHashes.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/8.13/fileHashes/resourceHashesCache.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/8.13/fileHashes/resourceHashesCache.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/buildOutputCleanup.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/buildOutputCleanup/outputFiles.bin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gradle/file-system.probe" beforeDir="false" afterPath="$PROJECT_DIR$/.gradle/file-system.probe" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/apk/debug/app-debug.apk" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/apk/debug/app-debug.apk" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/200.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/200.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/404.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/404.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/B4zGTlLV.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BHD35TnB.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BK3cHVMq.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BLu7XtDS.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BO2GmG03.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BTEvaS6_.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BTsMd0Qd.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BY84zwlb.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BgrIdbZj.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BjyRqmmv.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/BuZ_u3dk.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CC0d191I.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CDW7DvST.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CNYch4d4.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CObUOqP_.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CVymnTLV.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CZphN4Xd.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CfU3n76s.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CfUKhASN.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/ClM76AX1.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/CoD4Izi6.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/D1B46uO1.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/DLKYWwhh.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/DxtHHcn4.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/DzoYt77N.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/T4beT4Mf.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/builds/latest.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/builds/latest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/builds/meta/fc59ddf4-8392-4502-b989-5d0e4d7450de.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/entry.PVbxzcaO.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/error-404.CbMdPL9Y.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/error-500.BaT77Tb2.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/kGyBhhCr.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/_nuxt/rFSMsRrz.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/auth/login/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/auth/login/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/auth/register/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/auth/register/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/assets/debug/mergeDebugAssets/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/200.html.jar" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/200.html.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/404.html.jar" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/404.html.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/B4zGTlLV.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BHD35TnB.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BK3cHVMq.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BLu7XtDS.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BO2GmG03.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BTEvaS6_.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BTsMd0Qd.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BY84zwlb.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BgrIdbZj.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BjyRqmmv.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/BuZ_u3dk.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CC0d191I.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CDW7DvST.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CNYch4d4.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CObUOqP_.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CVymnTLV.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CZphN4Xd.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CfU3n76s.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CfUKhASN.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/ClM76AX1.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/CoD4Izi6.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/D1B46uO1.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/DLKYWwhh.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/DxtHHcn4.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/DzoYt77N.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/T4beT4Mf.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/builds/latest.json.jar" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/builds/latest.json.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/builds/meta/fc59ddf4-8392-4502-b989-5d0e4d7450de.json.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/entry.PVbxzcaO.css.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/error-404.CbMdPL9Y.css.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/error-500.BaT77Tb2.css.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/kGyBhhCr.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/_nuxt/rFSMsRrz.js.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/auth/login/index.html.jar" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/auth/login/index.html.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/auth/register/index.html.jar" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/auth/register/index.html.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/index.html.jar" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/compressed_assets/debug/compressDebugAssets/out/assets/public/index.html.jar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/incremental/debug/mergeDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/incremental/debug/mergeDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/incremental/debug/mergeDebugResources/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/incremental/debug/mergeDebugResources/merger.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/incremental/mergeDebugAssets/merger.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/incremental/mergeDebugAssets/merger.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/incremental/packageDebug/tmp/debug/dex-renamer-state.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/incremental/packageDebug/tmp/debug/dex-renamer-state.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/incremental/packageDebug/tmp/debug/zip-cache/androidResources" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/incremental/packageDebug/tmp/debug/zip-cache/androidResources" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/linked_resources_binary_format/debug/processDebugResources/linked-resources-binary-format-debug.ap_" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/linked_resources_binary_format/debug/processDebugResources/linked-resources-binary-format-debug.ap_" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/manifest_merge_blame_file/debug/processDebugMainManifest/manifest-merger-blame-debug-report.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/manifest_merge_blame_file/debug/processDebugMainManifest/manifest-merger-blame-debug-report.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/merged_res/debug/mergeDebugResources/xml_network_security_config.xml.flat" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/merged_res/debug/mergeDebugResources/xml_network_security_config.xml.flat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/merged_res_blame_folder/debug/mergeDebugResources/out/multi-v2/mergeDebugResources.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/merged_res_blame_folder/debug/mergeDebugResources/out/multi-v2/mergeDebugResources.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/merged_res_blame_folder/debug/mergeDebugResources/out/multi-v2/values.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/merged_res_blame_folder/debug/mergeDebugResources/out/multi-v2/values.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/merged_res_blame_folder/debug/mergeDebugResources/out/single/mergeDebugResources.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/merged_res_blame_folder/debug/mergeDebugResources/out/single/mergeDebugResources.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/packaged_res/debug/packageDebugResources/xml/network_security_config.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/packaged_res/debug/packageDebugResources/xml/network_security_config.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/source_set_path_map/debug/mapDebugSourceSetPaths/file-map.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/source_set_path_map/debug/mapDebugSourceSetPaths/file-map.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/intermediates/stable_resource_ids_file/debug/processDebugResources/stableIds.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/intermediates/stable_resource_ids_file/debug/processDebugResources/stableIds.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build/outputs/logs/manifest-merger-debug-report.txt" beforeDir="false" afterPath="$PROJECT_DIR$/app/build/outputs/logs/manifest-merger-debug-report.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/200.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/public/200.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/404.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/public/404.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/B4zGTlLV.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BHD35TnB.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BK3cHVMq.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BLu7XtDS.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BO2GmG03.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BTEvaS6_.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BTsMd0Qd.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BY84zwlb.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BgrIdbZj.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BjyRqmmv.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/BuZ_u3dk.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CC0d191I.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CDW7DvST.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CNYch4d4.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CObUOqP_.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CVymnTLV.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CZphN4Xd.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CfU3n76s.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CfUKhASN.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/ClM76AX1.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/CoD4Izi6.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/D1B46uO1.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/DLKYWwhh.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/DxtHHcn4.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/DzoYt77N.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/T4beT4Mf.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/builds/latest.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/builds/latest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/builds/meta/fc59ddf4-8392-4502-b989-5d0e4d7450de.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/entry.PVbxzcaO.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/error-404.CbMdPL9Y.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/error-500.BaT77Tb2.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/kGyBhhCr.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/_nuxt/rFSMsRrz.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/auth/login/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/public/auth/login/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/auth/register/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/public/auth/register/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/assets/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/xml/network_security_config.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/xml/network_security_config.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/build/reports/problems/problems-report.html" beforeDir="false" afterPath="$PROJECT_DIR$/build/reports/problems/problems-report.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/capacitor-cordova-android-plugins/build/.transforms/03c22e79844fd676672b9a1a6d812e12/results.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/capacitor-cordova-android-plugins/build/.transforms/969e6b2e29fe4a4ceb00a6240923b3a4/results.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/capacitor-cordova-android-plugins/build/.transforms/969e6b2e29fe4a4ceb00a6240923b3a4/transformed/bundleLibRuntimeToDirDebug/desugar_graph.bin" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/capacitor-cordova-android-plugins/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" beforeDir="false" afterPath="$PROJECT_DIR$/capacitor-cordova-android-plugins/build/intermediates/incremental/debug/packageDebugResources/compile-file-map.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/capacitor.settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/capacitor.settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App.xcworkspace/xcuserdata/fnk.xcuserdatad/UserInterfaceState.xcuserstate" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/App.xcworkspace/xcuserdata/fnk.xcuserdatad/UserInterfaceState.xcuserstate" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/200.html" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/App/public/200.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/404.html" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/App/public/404.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/_nuxt/builds/latest.json" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/App/public/_nuxt/builds/latest.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/_nuxt/error-404.CbMdPL9Y.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/_nuxt/error-500.BaT77Tb2.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/auth/login/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/App/public/auth/login/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/auth/register/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/App/public/auth/register/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/App/public/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/App/public/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Podfile" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Podfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Podfile.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Manifest.lock" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Manifest.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Pods.xcodeproj/project.pbxproj" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Pods.xcodeproj/project.pbxproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/Capacitor/Capacitor.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/Capacitor/Capacitor.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/Capacitor/Capacitor.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/Capacitor/Capacitor.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorApp/CapacitorApp.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorApp/CapacitorApp.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorApp/CapacitorApp.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorApp/CapacitorApp.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCamera/CapacitorCamera.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCamera/CapacitorCamera.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCamera/CapacitorCamera.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCamera/CapacitorCamera.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCommunitySqlite/CapacitorCommunitySqlite.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCommunitySqlite/CapacitorCommunitySqlite.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCommunitySqlite/CapacitorCommunitySqlite.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCommunitySqlite/CapacitorCommunitySqlite.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCordova/CapacitorCordova.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCordova/CapacitorCordova.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCordova/CapacitorCordova.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorCordova/CapacitorCordova.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorFilesystem/CapacitorFilesystem.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorFilesystem/CapacitorFilesystem.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorFilesystem/CapacitorFilesystem.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorFilesystem/CapacitorFilesystem.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorNetwork/CapacitorNetwork.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorNetwork/CapacitorNetwork.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorNetwork/CapacitorNetwork.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorNetwork/CapacitorNetwork.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorSecureStoragePlugin/CapacitorSecureStoragePlugin.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorSecureStoragePlugin/CapacitorSecureStoragePlugin.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorSecureStoragePlugin/CapacitorSecureStoragePlugin.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorSecureStoragePlugin/CapacitorSecureStoragePlugin.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorShare/CapacitorShare.debug.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorShare/CapacitorShare.debug.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorShare/CapacitorShare.release.xcconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/App/Pods/Target Support Files/CapacitorShare/CapacitorShare.release.xcconfig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/capacitor-cordova-ios-plugins/CordovaPlugins.podspec" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/capacitor-cordova-ios-plugins/CordovaPlugins.podspec" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../ios/capacitor-cordova-ios-plugins/CordovaPluginsStatic.podspec" beforeDir="false" afterPath="$PROJECT_DIR$/../ios/capacitor-cordova-ios-plugins/CordovaPluginsStatic.podspec" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../nuxt.config.ts" beforeDir="false" afterPath="$PROJECT_DIR$/../nuxt.config.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,16 +197,19 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[]" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[PhysicalDevice::serial=cc84f648]" />
   <component name="ExternalProjectsData">
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
     </projectState>
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 6,
-  "fromUser": false
-}]]></component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
   <component name="ProjectId" id="3EMlzBCUiLVBz7nSeDUNxhZEwVt" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -36,10 +223,12 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
     "com.google.services.firebase.aqiPopupShown": "true",
+    "git-widget-placeholder": "phase-13-capacitor-native-ocr-mobile",
     "kotlin-language-version-configured": "true"
   }
 }]]></component>

@@ -17,7 +17,7 @@ export default defineNuxtConfig({
         { charset: 'utf-8' },
         {
           name: 'viewport',
-          content: 'width=device-width, initial-scale=1, viewport-fit=cover',
+          content: 'width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover',
         },
       ],
     },
@@ -34,7 +34,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       // apiBaseUrl: 'http://localhost:3000/api/v1',
-      apiBaseUrl: 'http://192.168.68.50:3000/api/v1',
+      apiBaseUrl: 'http://192.168.68.58:3000/api/v1',
       sentryDsn: process.env.SENTRY_DSN ?? ''
     },
   },

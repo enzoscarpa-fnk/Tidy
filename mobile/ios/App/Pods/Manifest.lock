@@ -30,15 +30,15 @@ PODS:
   - ZIPFoundation (0.9.20)
 
 DEPENDENCIES:
-  - "Capacitor (from `../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios`)"
-  - "CapacitorApp (from `../../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@7.6.1/node_modules/@capacitor/app`)"
-  - "CapacitorCamera (from `../../../node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera`)"
-  - "CapacitorCommunitySqlite (from `../../../node_modules/.pnpm/@capacitor-community+sqlite@6.0.2_@capacitor+core@7.6.1/node_modules/@capacitor-community/sqlite`)"
-  - "CapacitorCordova (from `../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios`)"
-  - "CapacitorFilesystem (from `../../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@7.6.1/node_modules/@capacitor/filesystem`)"
-  - "CapacitorNetwork (from `../../../node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network`)"
-  - "CapacitorSecureStoragePlugin (from `../../../node_modules/.pnpm/capacitor-secure-storage-plugin@0.11.0_@capacitor+core@7.6.1/node_modules/capacitor-secure-storage-plugin`)"
-  - "CapacitorShare (from `../../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/share`)"
+  - "Capacitor (from `../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@8.3.4/node_modules/@capacitor/ios`)"
+  - "CapacitorApp (from `../../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@8.3.4/node_modules/@capacitor/app`)"
+  - "CapacitorCamera (from `../../../node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@8.3.4/node_modules/@capacitor/camera`)"
+  - "CapacitorCommunitySqlite (from `../../../node_modules/.pnpm/@capacitor-community+sqlite@6.0.2_@capacitor+core@8.3.4/node_modules/@capacitor-community/sqlite`)"
+  - "CapacitorCordova (from `../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@8.3.4/node_modules/@capacitor/ios`)"
+  - "CapacitorFilesystem (from `../../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@8.3.4/node_modules/@capacitor/filesystem`)"
+  - "CapacitorNetwork (from `../../../node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@8.3.4/node_modules/@capacitor/network`)"
+  - "CapacitorSecureStoragePlugin (from `../../../node_modules/.pnpm/capacitor-secure-storage-plugin@0.11.0_@capacitor+core@8.3.4/node_modules/capacitor-secure-storage-plugin`)"
+  - "CapacitorShare (from `../../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@8.3.4/node_modules/@capacitor/share`)"
 
 SPEC REPOS:
   trunk:
@@ -49,23 +49,23 @@ SPEC REPOS:
 
 EXTERNAL SOURCES:
   Capacitor:
-    :path: "../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios"
+    :path: "../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@8.3.4/node_modules/@capacitor/ios"
   CapacitorApp:
-    :path: "../../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@7.6.1/node_modules/@capacitor/app"
+    :path: "../../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@8.3.4/node_modules/@capacitor/app"
   CapacitorCamera:
-    :path: "../../../node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@7.6.1/node_modules/@capacitor/camera"
+    :path: "../../../node_modules/.pnpm/@capacitor+camera@7.0.5_@capacitor+core@8.3.4/node_modules/@capacitor/camera"
   CapacitorCommunitySqlite:
-    :path: "../../../node_modules/.pnpm/@capacitor-community+sqlite@6.0.2_@capacitor+core@7.6.1/node_modules/@capacitor-community/sqlite"
+    :path: "../../../node_modules/.pnpm/@capacitor-community+sqlite@6.0.2_@capacitor+core@8.3.4/node_modules/@capacitor-community/sqlite"
   CapacitorCordova:
-    :path: "../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@7.6.1/node_modules/@capacitor/ios"
+    :path: "../../../node_modules/.pnpm/@capacitor+ios@8.3.4_@capacitor+core@8.3.4/node_modules/@capacitor/ios"
   CapacitorFilesystem:
-    :path: "../../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@7.6.1/node_modules/@capacitor/filesystem"
+    :path: "../../../node_modules/.pnpm/@capacitor+filesystem@7.1.8_@capacitor+core@8.3.4/node_modules/@capacitor/filesystem"
   CapacitorNetwork:
-    :path: "../../../node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/network"
+    :path: "../../../node_modules/.pnpm/@capacitor+network@7.0.4_@capacitor+core@8.3.4/node_modules/@capacitor/network"
   CapacitorSecureStoragePlugin:
-    :path: "../../../node_modules/.pnpm/capacitor-secure-storage-plugin@0.11.0_@capacitor+core@7.6.1/node_modules/capacitor-secure-storage-plugin"
+    :path: "../../../node_modules/.pnpm/capacitor-secure-storage-plugin@0.11.0_@capacitor+core@8.3.4/node_modules/capacitor-secure-storage-plugin"
   CapacitorShare:
-    :path: "../../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@7.6.1/node_modules/@capacitor/share"
+    :path: "../../../node_modules/.pnpm/@capacitor+share@7.0.4_@capacitor+core@8.3.4/node_modules/@capacitor/share"
 
 SPEC CHECKSUMS:
   Capacitor: d13cad5fa09155679672808cc4ca9fbc2997e1b4
@@ -82,6 +82,6 @@ SPEC CHECKSUMS:
   SwiftKeychainWrapper: 807ba1d63c33a7d0613288512399cd1eda1e470c
   ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
-PODFILE CHECKSUM: fc225bc78f1071a9e161b89a7c09505e11b66e09
+PODFILE CHECKSUM: 6ba33e4b3d9cc5e51830c9aec2f896e4900c9c1b
 
 COCOAPODS: 1.16.2
