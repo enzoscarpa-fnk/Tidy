@@ -43,6 +43,40 @@ const ENTITY_LABELS: Record<EntityType, string> = {
   IBAN: 'IBAN',
   SIRET: 'SIRET',
 }
+
+/**
+ * Filtre les entités pour éviter le bruit :
+ * - AMOUNT : garder uniquement le montant le plus élevé (total TTC probable)
+ * - DATE   : garder uniquement la date la plus récente
+ * - Autres : garder toutes les occurrences (VENDOR, IBAN, SIRET sont uniques)
+ */
+const filteredEntities = computed(() => {
+  const entities = props.intelligence.extractedEntities
+
+  const amounts = entities.filter(e => e.entityType === 'AMOUNT')
+  const dates   = entities.filter(e => e.entityType === 'DATE')
+  const others  = entities.filter(e => e.entityType !== 'AMOUNT' && e.entityType !== 'DATE')
+
+  const topAmount = amounts.length
+    ? amounts.reduce((best, curr) => {
+      const parse = (v: string) => parseFloat(v.replace(/[^\d.,]/g, '').replace(',', '.')) || 0
+      return parse(curr.value) > parse(best.value) ? curr : best
+    })
+    : null
+
+  const topDate = dates.length
+    ? dates.reduce((best, curr) => {
+      const parse = (v: string) => new Date(v.split('/').reverse().join('-')).getTime() || 0
+      return parse(curr.value) > parse(best.value) ? curr : best
+    })
+    : null
+
+  return [
+    ...(topAmount ? [topAmount] : []),
+    ...(topDate   ? [topDate]   : []),
+    ...others,
+  ]
+})
 </script>
 
 <template>
@@ -102,11 +136,11 @@ const ENTITY_LABELS: Record<EntityType, string> = {
     </div>
 
     <!-- Entités extraites -->
-    <div v-if="intelligence.extractedEntities.length > 0" class="mb-3">
+    <div v-if="filteredEntities.length > 0" class="mb-3">
       <p class="mb-2 text-xs text-tidy-text-secondary">Informations détectées</p>
       <dl class="grid grid-cols-2 gap-x-3 gap-y-2">
         <div
-          v-for="entity in intelligence.extractedEntities"
+          v-for="entity in filteredEntities"
           :key="`${entity.entityType}-${entity.value}`"
           class="min-w-0"
         >
