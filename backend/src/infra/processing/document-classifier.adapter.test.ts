@@ -76,7 +76,7 @@ describe('DocumentClassifierAdapter', () => {
   // ── Confidence ────────────────────────────────────────────────────────────
 
   it('should return higher confidence when more keywords match', () => {
-    const sparse = 'Facture émise.';
+    const sparse = 'Facture émise — montant HT dû.';
     const rich   = 'Facture N°001 — Montant HT : 500 € — TVA incluse — Total TTC : 600 € — Bon de commande';
     const a = adapter.classify(sparse);
     const b = adapter.classify(rich);

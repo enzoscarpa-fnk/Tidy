@@ -12,7 +12,6 @@ interface ClassificationRule {
 const RULES: ClassificationRule[] = [
   {
     type: 'INVOICE',
-    // Signaux forts et spécifiques aux factures
     keywords: [
       /\bfacture\b/i,
       /\binvoice\b/i,
@@ -73,11 +72,12 @@ const RULES: ClassificationRule[] = [
   },
 ];
 
-// Plage de confiance : une seule correspondance → MIN, toutes → MAX
-const CONFIDENCE_MIN  = 0.45;
-const CONFIDENCE_MAX  = 0.95;
-// Ratio minimum pour accepter une classification (évite les faux positifs sur 1 match faible)
-const MIN_RATIO_THRESHOLD = 0.25;
+const CONFIDENCE_MIN = 0.45;
+const CONFIDENCE_MAX = 0.95;
+
+// Abaissé à 0.15 pour couvrir les textes courts avec 1-2 signaux forts
+// (ex: "Invoice #INV-2024 — TTC" = 2/9 ≈ 0.22 > 0.15)
+const MIN_RATIO_THRESHOLD = 0.15;
 
 export class DocumentClassifierAdapter implements IDocumentClassifierService {
   classify(text: string): ClassificationResult {
