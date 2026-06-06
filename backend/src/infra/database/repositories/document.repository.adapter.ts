@@ -135,6 +135,10 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const where: Prisma.DocumentWhereInput = {
       workspaceId,
       isDeleted: false,
+      // Exclure les archivés sauf si le filtre demande explicitement ARCHIVED
+      ...(!filters.processingStatus?.includes('ARCHIVED' as ProcessingStatus) && {
+        processingStatus: { not: PrismaProcessingStatus.ARCHIVED },
+      }),
       ...(filters.processingStatus?.length && {
         processingStatus: {in: filters.processingStatus as PrismaProcessingStatus[]},
       }),
@@ -175,6 +179,10 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     const conditions: Prisma.Sql[] = [
       Prisma.sql`d."workspaceId" = ${workspaceId}`,
       Prisma.sql`d."isDeleted"   = false`,
+      // Exclure les archivés sauf si le filtre demande explicitement ARCHIVED
+      ...(filters.processingStatus?.includes('ARCHIVED' as ProcessingStatus)
+        ? []
+        : [Prisma.sql`d."processingStatus"::text != 'ARCHIVED'`]),
     ];
 
     if (filters.processingStatus?.length) {
@@ -459,7 +467,9 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
                ts_rank(d."search_vector", to_tsquery('simple', ${toWildcardTsquery(filters.query)})) AS rank
         FROM "documents" d
         WHERE ${where}
-        ORDER BY rank DESC
+        ORDER BY
+          CASE WHEN d."processingStatus"::text = 'ARCHIVED' THEN 1 ELSE 0 END ASC,
+          rank DESC
           LIMIT ${limit}
         OFFSET ${offset}
       `,

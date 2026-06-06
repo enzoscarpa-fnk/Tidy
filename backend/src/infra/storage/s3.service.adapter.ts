@@ -11,6 +11,7 @@ export class S3ServiceAdapter implements IS3Service {
   constructor(
     private readonly client: S3Client,
     private readonly bucket: string,
+    private readonly presignClient?: S3Client,
   ) {}
 
   static fromEnv(): S3ServiceAdapter {
@@ -18,7 +19,10 @@ export class S3ServiceAdapter implements IS3Service {
     const accessKeyId     = process.env['AWS_ACCESS_KEY_ID']     ?? '';
     const secretAccessKey = process.env['AWS_SECRET_ACCESS_KEY'] ?? '';
     const bucket          = process.env['AWS_BUCKET']            ?? '';
+    // En dev MinIO : endpoint interne (localhost) pour les opérations serveur-à-serveur
     const endpointUrl     = process.env['AWS_ENDPOINT_URL'];
+    // En dev MinIO : endpoint public (IP LAN) pour les URLs présignées accessibles depuis le mobile
+    const publicEndpointUrl = process.env['AWS_ENDPOINT_URL_PUBLIC'] || endpointUrl;
 
     if (!region || !accessKeyId || !secretAccessKey || !bucket) {
       throw new Error(
@@ -27,6 +31,7 @@ export class S3ServiceAdapter implements IS3Service {
       );
     }
 
+    // Client principal — pour upload, download serveur-à-serveur (localhost)
     const client = new S3Client({
       region,
       credentials: { accessKeyId, secretAccessKey },
@@ -36,7 +41,17 @@ export class S3ServiceAdapter implements IS3Service {
       }),
     });
 
-    return new S3ServiceAdapter(client, bucket);
+    // Client pour les URLs présignées — utilise l'IP publique pour que la signature soit valide
+    const presignClient = new S3Client({
+      region,
+      credentials: { accessKeyId, secretAccessKey },
+      ...(publicEndpointUrl && {
+        endpoint:       publicEndpointUrl,
+        forcePathStyle: true,
+      }),
+    });
+
+    return new S3ServiceAdapter(client, bucket, presignClient);
   }
 
   // ── Téléchargement (pipeline côté serveur) ────────────────────────────────
@@ -83,7 +98,7 @@ export class S3ServiceAdapter implements IS3Service {
 
   async generatePresignedGetUrl(key: string, expiresIn: number): Promise<string> {
     return getSignedUrl(
-      this.client,
+      this.presignClient ?? this.client,  // ← utilise le client public si disponible
       new GetObjectCommand({ Bucket: this.bucket, Key: key }),
       { expiresIn },
     );

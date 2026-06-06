@@ -27,6 +27,7 @@
 	"packageClassList": [
 		"CapacitorSQLitePlugin",
 		"AppPlugin",
+		"CAPBrowserPlugin",
 		"CAPCameraPlugin",
 		"FilesystemPlugin",
 		"CAPNetworkPlugin",
