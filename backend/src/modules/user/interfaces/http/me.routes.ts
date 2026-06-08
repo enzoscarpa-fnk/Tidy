@@ -83,11 +83,34 @@ const meRoutes: FastifyPluginAsync = async (fastify) => {
       const user = await userRepo.findById(request.user.sub);
       if (!user) throw new UserNotFoundError();
 
-      // Suppression cascade : documents, workspaces, refresh tokens
-      // via ON DELETE CASCADE du schéma Prisma
       await userRepo.delete(user.id);
 
       return reply.status(204).send();
+    },
+  });
+
+  // ── GET /api/v1/me/stats ────────────────────────────────────────────────────
+  // Retourne la somme des fileSizeBytes de tous les documents non supprimés
+  // appartenant à l'utilisateur, tous workspaces confondus, la taille est stockée en base.
+
+  fastify.get('/me/stats', {
+    onRequest: [authenticate],
+    handler: async (request, reply) => {
+      const result = await fastify.prisma.document.aggregate({
+        where: {
+          uploadedById: request.user.sub,
+          isDeleted:    false,
+        },
+        _sum: {
+          fileSizeBytes: true,
+        },
+      });
+
+      const cloudStorageBytes = Number(result._sum.fileSizeBytes ?? 0);
+
+      return reply.status(200).send(
+        createSuccessResponse({ cloudStorageBytes }),
+      );
     },
   });
 };

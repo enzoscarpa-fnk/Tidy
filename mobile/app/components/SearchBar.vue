@@ -3,12 +3,14 @@ interface Props {
   initialQuery?: string
   placeholder?: string
   autofocus?: boolean
+  fullWidth?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   initialQuery: '',
   placeholder: 'Rechercher un document, un montant, un fournisseur…',
   autofocus: false,
+  fullWidth: false,
 })
 
 const emit = defineEmits<{
@@ -25,7 +27,7 @@ onMounted(() => {
   }
 })
 
-// ── Règle critique : PAS de recherche live (UX Flow §6) ──────────────────
+// ── Règle critique : PAS de recherche live (UX Flow §6) ────────────────────
 // La recherche est déclenchée UNIQUEMENT à la soumission (Enter ou icône loupe).
 
 function handleSubmit(): void {
@@ -55,9 +57,13 @@ function handleKeydown(event: KeyboardEvent): void {
       v-model="inputValue"
       type="search"
       :placeholder="placeholder"
-      class="w-full pl-4 pr-20 py-3 rounded-xl bg-tidy-surface border border-tidy-border
-             text-tidy-text-primary placeholder:text-tidy-text-secondary text-sm
+      class="w-full text-tidy-text-primary placeholder:text-tidy-text-secondary text-sm
              focus:outline-none focus:ring-2 focus:ring-tidy-primary/40 transition-shadow"
+      :class="[
+        fullWidth
+          ? 'pl-5 pr-20 py-3 rounded-full bg-white border border-tidy-border shadow-sm'
+          : 'pl-4 pr-20 py-3 rounded-xl bg-tidy-surface border border-tidy-border',
+      ]"
       autocomplete="off"
       @keydown="handleKeydown"
     />

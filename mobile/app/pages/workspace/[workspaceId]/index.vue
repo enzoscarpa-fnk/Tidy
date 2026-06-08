@@ -27,8 +27,6 @@ function handleGallery(): void {
   router.push(`/workspace/${workspaceId.value}/scan?source=gallery`)
 }
 
-// Input PDF uniquement — pas d'images pour forcer le sélecteur de fichiers
-// natif sans proposer Photos/Camera
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
 function handleImportDocument(): void {
@@ -39,7 +37,7 @@ function handleImportDocument(): void {
 async function onFileSelected(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement
   const file  = input.files?.[0]
-  input.value = '' // reset
+  input.value = ''
 
   if (!file) return
 
@@ -71,11 +69,7 @@ function handleSearch(query: string): void {
     <header class="sticky top-0 z-30 border-b border-tidy-border bg-white">
       <div class="flex items-center gap-3 px-4 py-3">
         <WorkspaceSelector class="flex-shrink-0" />
-        <SearchBar
-          class="flex-1"
-          placeholder="Rechercher un document…"
-          @search="handleSearch"
-        />
+        <div class="flex-1" />
         <button
           type="button"
           class="flex-shrink-0 rounded-full p-0.5 ring-2 ring-tidy-border transition-colors hover:ring-tidy-primary"
@@ -93,18 +87,17 @@ function handleSearch(query: string): void {
 
     <!-- ── Contenu principal ───────────────────────────────────────────── -->
     <main class="flex-1 px-4 py-4">
+
+      <!-- Barre de recherche pleine largeur -->
       <div class="mb-4">
-        <h1 class="text-base font-semibold text-tidy-text-primary">
-          {{ workspaceStore.currentWorkspace?.name ?? '' }}
-        </h1>
-        <p
-          v-if="!documentStore.isLoading && !documentStore.error"
-          class="text-xs text-tidy-text-tertiary"
-        >
-          {{ workspaceStore.currentWorkspace?.documentCount ?? 0 }}
-          {{ (workspaceStore.currentWorkspace?.documentCount ?? 0) === 1 ? 'document' : 'documents' }}
-        </p>
+        <SearchBar
+          class="w-full"
+          placeholder="Rechercher un document…"
+          :full-width="true"
+          @search="handleSearch"
+        />
       </div>
+
       <DocumentList :workspace-id="workspaceId" />
     </main>
 
@@ -198,8 +191,6 @@ function handleSearch(query: string): void {
       </button>
     </div>
 
-    <!-- Input PDF uniquement — accept="application/pdf" évite le popup
-         Photos/Camera sur iOS et ouvre directement le sélecteur de fichiers -->
     <input
       ref="fileInputRef"
       type="file"

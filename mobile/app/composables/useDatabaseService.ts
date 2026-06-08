@@ -386,6 +386,41 @@ export function useDatabaseService() {
     return result.values ?? []
   }
 
+  async function getTotalLocalStorageBytes(): Promise<number> {
+    try {
+      const db = _getDb()
+      const result = await db.query(
+        `SELECT COALESCE(SUM(file_size_bytes), 0) AS total
+         FROM documents
+         WHERE is_deleted = 0`,
+        []
+      )
+      return (result.values?.[0]?.total as number) ?? 0
+    } catch {
+      return 0
+    }
+  }
+
+  async function getDocumentCountByStatus(): Promise<Record<string, number>> {
+    try {
+      const db = _getDb()
+      const result = await db.query(
+        `SELECT processing_status, COUNT(*) AS cnt
+         FROM documents
+         WHERE is_deleted = 0
+         GROUP BY processing_status`,
+        []
+      )
+      const counts: Record<string, number> = {}
+      for (const row of result.values ?? []) {
+        counts[row.processing_status as string] = row.cnt as number
+      }
+      return counts
+    } catch {
+      return {}
+    }
+  }
+
   return {
     isReady: readonly(_isReady),
     initDatabase,
@@ -399,5 +434,7 @@ export function useDatabaseService() {
     getPendingSyncLogEntries,
     updateSyncLogEntry,
     getSyncLogByDocument,
+    getTotalLocalStorageBytes,
+    getDocumentCountByStatus,
   }
 }

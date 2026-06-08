@@ -241,16 +241,6 @@ onUnmounted(() => {
           />
         </svg>
       </div>
-
-      <!-- Fin de liste — feedback discret -->
-      <p
-        v-if="!documentStore.hasNextPage && documentStore.documents.length > 0 && !isFetchingNextPage"
-        class="py-3 text-center text-xs text-tidy-text-tertiary"
-        aria-live="polite"
-      >
-        {{ documentStore.documents.length }}
-        {{ documentStore.documents.length === 1 ? 'document' : 'documents' }}
-      </p>
     </template>
 
   </section>

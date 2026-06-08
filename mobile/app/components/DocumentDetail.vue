@@ -64,6 +64,7 @@ async function handleArchive(): Promise<void> {
   isArchiving.value = true
   try {
     await documentStore.archiveDocument(props.documentId)
+    router.replace(`/workspace/${props.workspaceId}`)
   } finally {
     isArchiving.value = false
     showArchiveInfo.value = false
@@ -353,7 +354,7 @@ onMounted(async () => { await documentStore.fetchDocument(props.documentId) })
           </div>
           <h2 class="text-center text-base font-semibold text-tidy-text-primary mb-2">Archiver ce document ?</h2>
           <p class="text-center text-sm text-tidy-text-secondary mb-6">
-            Archiver un document le retire de votre liste principale tout en le conservant dans Tidy. Il reste accessible et téléchargeable, mais n'apparaît plus dans les résultats de recherche ni dans le dashboard. Utile pour garder votre espace de travail organisé sans perdre de documents importants.
+            Archiver ce document le retire de votre liste principale tout en le conservant dans Tidy. Il reste accessible, téléchargeable et trouvable dans les résultats de recherche, mais n'apparaît plus dans le dashboard.
           </p>
           <div class="flex flex-col gap-3">
             <button
