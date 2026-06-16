@@ -45,37 +45,61 @@ const displayH    = ref(0)
 let cv: any = null
 
 async function _loadOpenCv(): Promise<void> {
+  // Déjà chargé et prêt
   if ((window as any).cv?.Mat) {
     cv = (window as any).cv
     return
   }
 
-  const existing = document.querySelector('script[data-opencv]')
-
   return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => reject(new Error('OpenCV timeout')), 20_000)
+    const timeout = setTimeout(() => {
+      reject(new Error('OpenCV timeout après 30s'))
+    }, 30_000)
 
+    function waitForCv(attempts = 0): void {
+      const wcv = (window as any).cv
+      if (wcv?.Mat) {
+        cv = wcv
+        clearTimeout(timeout)
+        resolve()
+        return
+      }
+      if (attempts > 300) {
+        // 300 * 100ms = 30s — laisser le timeout gérer
+        return
+      }
+      setTimeout(() => waitForCv(attempts + 1), 100)
+    }
+
+    // Injecter le callback WASM avant le chargement du script
     const prevInit = (window as any).Module?.onRuntimeInitialized
     ;(window as any).Module = {
       ...(window as any).Module,
       onRuntimeInitialized() {
         prevInit?.()
-        cv = (window as any).cv
-        clearTimeout(timeout)
-        resolve()
+        // cv.Mat peut ne pas être encore disponible immédiatement
+        waitForCv()
       },
     }
 
-    if (!existing) {
+    // Injecter le script si pas déjà présent
+    if (!document.querySelector('script[data-opencv]')) {
       const script = document.createElement('script')
-      script.src = 'https://docs.opencv.org/4.10.0/opencv.js'
+      script.src = '/opencv.js'
       script.async = true
       script.dataset.opencv = 'true'
-      script.onerror = () => {
+      script.onerror = (e) => {
         clearTimeout(timeout)
         reject(new Error('Impossible de charger OpenCV.js'))
       }
+      script.onload = () => {
+        // Si onRuntimeInitialized ne se déclenche pas (déjà init), on poll quand même
+        setTimeout(() => waitForCv(), 500)
+      }
       document.head.appendChild(script)
+    } else {
+      // Script déjà injecté mais cv pas encore prêt — on poll
+      waitForCv()
     }
   })
 }
@@ -282,53 +306,69 @@ function _detectDocumentCorners(): void {
     hierarchy = new cv.Mat()
 
     cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY)
-    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0)
-    cv.Canny(blurred, edges, 75, 200)
+    cv.GaussianBlur(gray, blurred, new cv.Size(9, 9), 0)
+    cv.Canny(blurred, edges, 30, 100)
 
-    const kernel = cv.Mat.ones(3, 3, cv.CV_8U)
+    // Dilatation forte pour fusionner les bords internes (lignes de tableau, etc.)
+    const kernel = cv.Mat.ones(15, 15, cv.CV_8U)
     cv.dilate(edges, edges, kernel)
     kernel.delete()
 
+    // RETR_EXTERNAL : on ne récupère QUE les contours externes
+    // → ignore toutes les cellules internes du tableau
     cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
-    let bestContour: any = null
-    let bestArea = 0
+    // Étape 1 : trouver le plus grand contour externe (par aire brute)
+    let largestContour: any = null
+    let largestArea = 0
 
     for (let i = 0; i < contours.size(); i++) {
       const contour = contours.get(i)
-      const peri    = cv.arcLength(contour, true)
-      const approx  = new cv.Mat()
-      cv.approxPolyDP(contour, approx, 0.02 * peri, true)
-
-      if (approx.rows === 4) {
-        const area = cv.contourArea(approx)
-        if (area > bestArea) {
-          bestArea = area
-          bestContour?.delete()
-          bestContour = approx
-        } else {
-          approx.delete()
-        }
+      const area    = cv.contourArea(contour)
+      if (area > largestArea) {
+        largestArea = area
+        largestContour?.delete()
+        largestContour = contour
       } else {
-        approx.delete()
+        contour.delete()
       }
-      contour.delete()
     }
 
-    const minArea = imgNaturalW.value * imgNaturalH.value * 0.10
+    if (!largestContour) {
+      return
+    }
 
-    if (bestContour && bestArea > minArea) {
+    // Étape 2 : approximer le plus grand contour en polygone
+    // On teste plusieurs epsilon pour trouver une approximation à 4 points
+    const peri   = cv.arcLength(largestContour, true)
+    let bestApprox: any = null
+
+    for (const epsilonFactor of [0.02, 0.03, 0.04, 0.05, 0.08, 0.10]) {
+      const approx = new cv.Mat()
+      cv.approxPolyDP(largestContour, approx, epsilonFactor * peri, true)
+      if (approx.rows === 4) {
+        bestApprox = approx
+        break
+      }
+      approx.delete()
+    }
+
+    largestContour.delete()
+
+    if (bestApprox) {
       const pts: [number, number][] = []
       for (let r = 0; r < 4; r++) {
-        const x = bestContour.data32S[r * 2]!
-        const y = bestContour.data32S[r * 2 + 1]!
+        const x = bestApprox.data32S[r * 2]!
+        const y = bestApprox.data32S[r * 2 + 1]!
         pts.push([x / imgNaturalW.value, y / imgNaturalH.value])
       }
       corners.value = _sortCorners(pts)
-      bestContour.delete()
+      bestApprox.delete()
+    } else {
+      // Fallback : utiliser le bounding rect du plus grand contour
     }
+
   } catch (err) {
-    console.warn('[ScanCropEditor] Détection échouée, fallback coins par défaut', err)
   } finally {
     try { src?.delete()       } catch { /* ignore */ }
     try { gray?.delete()      } catch { /* ignore */ }
@@ -340,12 +380,25 @@ function _detectDocumentCorners(): void {
 }
 
 function _sortCorners(pts: [number, number][]): [number, number][] {
+  // Trier par somme x+y : TL a la plus petite somme, BR la plus grande
   const sums  = pts.map(([x, y]) => x + y)
   const diffs = pts.map(([x, y]) => x - y)
+
   const tl = pts[sums.indexOf(Math.min(...sums))]!
   const br = pts[sums.indexOf(Math.max(...sums))]!
   const tr = pts[diffs.indexOf(Math.min(...diffs))]!
   const bl = pts[diffs.indexOf(Math.max(...diffs))]!
+
+  // Vérifier que l'ordre est bien horaire (cross product positif TL→TR × TL→BL)
+  // Si le cross product est négatif, l'ordre est antihoraire → inverser TR et BL
+  const crossProduct =
+    (tr[0] - tl[0]) * (bl[1] - tl[1]) - (tr[1] - tl[1]) * (bl[0] - tl[0])
+
+  if (crossProduct < 0) {
+    // Ordre antihoraire détecté → échanger TR et BL
+    return [tl, bl, br, tr]
+  }
+
   return [tl, tr, br, bl]
 }
 

@@ -221,7 +221,12 @@ async function confirmAndUpload(): Promise<void> {
             @click="openCropEditor"
           >
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21H3a1 1 0 01-1-1v-4m4 5V7a1 1 0 011-1h4M21 7V3a1 1 0 00-1-1h-4m5 4h-5m0 0v5M3 17h5m0 0v-5" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8V3h5" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 3h5v5" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 16v5h-5" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 21H3v-5" />
+              <circle cx="12" cy="12" r="2" stroke-width="1.5" />
+              <path stroke-linecap="round" stroke-width="1.5" d="M12 9v2M12 13v2M9 12h2M13 12h2" />
             </svg>
             {{ croppedBase64 ? 'Recadrer à nouveau' : 'Recadrer / Corriger la perspective' }}
           </button>
