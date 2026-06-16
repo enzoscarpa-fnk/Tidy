@@ -21,6 +21,7 @@ export type ErrorCode =
   | 'SHARE_LINK_NOT_FOUND'
   | 'SHARE_LINK_REVOKED'
   | 'SHARE_LINK_EXPIRED'
+  | 'FILE_NOT_UPLOADED'
   | 'INTERNAL_ERROR';
 
 // Table de mapping code → HTTP status
@@ -37,6 +38,7 @@ export const ERROR_STATUS_MAP: Record<ErrorCode, number> = {
   SHARE_LINK_NOT_FOUND:       404,
   SHARE_LINK_REVOKED:         404,
   SHARE_LINK_EXPIRED:         404,
+  FILE_NOT_UPLOADED:          404,
   EMAIL_ALREADY_EXISTS:       409,
   WORKSPACE_NAME_DUPLICATE:   409,
   WORKSPACE_ARCHIVED:         422,

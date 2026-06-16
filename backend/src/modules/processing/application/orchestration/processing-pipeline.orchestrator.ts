@@ -11,6 +11,7 @@ import type { TextExtractionMethod }       from '../../../document/domain/docume
 import type { DocumentUploadedEvent }      from '../../../document/domain/events/document-uploaded.event';
 import { DocumentIntelligence }            from '../../../document/domain/document-intelligence.value-object';
 import { DocumentReadyEvent }              from '../../../document/domain/events/document-ready.event';
+import sharp from 'sharp';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,14 @@ function buildSuggestedTags(
   const typeTag    = detectedType.toLowerCase();
   const entityTags = [...new Set(entities.map((e) => e.entityType.toLowerCase()))];
   return [typeTag, ...entityTags];
+}
+
+// Compresse une image JPEG/PNG à ~500KB max avant envoi OCR
+async function compressImageForOcr(buffer: Buffer): Promise<Buffer> {
+  return sharp(buffer)
+    .resize(2000, 2000, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 70 })
+    .toBuffer();
 }
 
 // ── Injection de dépendances ──────────────────────────────────────────────────
@@ -65,18 +74,20 @@ export class ProcessingPipelineOrchestrator {
           extractedText = textResult.text;
           textMethod    = 'NATIVE_PDF';
         } else {
+          const compressedBuffer = await compressImageForOcr(fileBuffer);
           const ocrResult = await this.deps.ocrService.processDocument(
-            fileBuffer.toString('base64'),
-            mimeType,
+            compressedBuffer.toString('base64'),
+            'image/jpeg',
           );
           extractedText = ocrResult.text || null;
           textMethod    = 'OCR';
           pageCount     = ocrResult.pageCount;
         }
       } else {
+        const compressedBuffer = await compressImageForOcr(fileBuffer);
         const ocrResult = await this.deps.ocrService.processDocument(
-          fileBuffer.toString('base64'),
-          mimeType,
+          compressedBuffer.toString('base64'),
+          'image/jpeg',
         );
         extractedText = ocrResult.text || null;
         textMethod    = 'OCR';
@@ -134,7 +145,7 @@ export class ProcessingPipelineOrchestrator {
 
     } catch (err: unknown) {
       console.error('[Pipeline] FAILED for document', documentId, err);
-      
+
       const errorMessage =
         err instanceof Error ? err.message : 'Erreur inconnue dans le pipeline OCR.';
 
