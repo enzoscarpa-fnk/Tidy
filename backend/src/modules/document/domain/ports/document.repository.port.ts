@@ -95,6 +95,7 @@ export interface IDocumentRepository {
   ): Promise<{ items: Document[]; total: number }>;
   update(id: string, data: UpdateDocumentData): Promise<Document>;
   softDelete(id: string): Promise<void>;
+  hardDelete(id: string): Promise<void>;
   updateStatus(
     id: string,
     status: ProcessingStatus,

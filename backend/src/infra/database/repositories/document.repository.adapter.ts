@@ -280,6 +280,12 @@ export class DocumentRepositoryAdapter implements IDocumentRepository {
     });
   }
 
+  async hardDelete(id: string): Promise<void> {
+    await this.prisma.document.delete({
+      where: { id },
+    });
+  }
+
   async updateStatus(
     id: string,
     status: ProcessingStatus,

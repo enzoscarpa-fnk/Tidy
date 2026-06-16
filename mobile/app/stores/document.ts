@@ -78,7 +78,7 @@ export const useDocumentStore = defineStore('document', () => {
     )
   }
 
-  // ── Actions document unique (Ticket 8.3) ───────────────────────────────
+  // ── Actions document unique ────────────────────────────────────────────
 
   async function fetchDocument(id: string): Promise<void> {
     const { request } = useTidyApi()
@@ -137,14 +137,52 @@ export const useDocumentStore = defineStore('document', () => {
 
   async function deleteDocument(id: string): Promise<void> {
     const { request } = useTidyApi()
-    await request(`/documents/${id}`, { method: 'DELETE' })
+    const localRepo = useLocalDocumentRepository()
+
+    // 1. Récupérer le doc local avant suppression pour obtenir le chemin fichier.
+    //    downloadUrl contient le local_path en offline (cf. _rowToDetail dans localRepo).
+    const localDoc = await localRepo.getDocumentById(id).catch(() => null)
+    const localPath: string | null =
+      localDoc?.downloadUrl && !localDoc.downloadUrl.startsWith('http')
+        ? localDoc.downloadUrl
+        : null
+
+    // 2. Supprimer côté cloud (best-effort).
+    //    En cas d'échec réseau, le soft-delete + sync_log permettront
+    //    au SyncService de repousser la suppression à la prochaine sync.
+    try {
+      await request(`/documents/${id}`, { method: 'DELETE' })
+    } catch (err) {
+      console.warn('[DocumentStore] deleteDocument cloud error:', err)
+    }
+
+    // 3. Soft-delete dans SQLite + entrée sync_log pour retry offline.
+    try {
+      await localRepo.softDeleteDocument(id)
+      await useDatabaseService().addSyncLogEntry(id, 'delete')
+    } catch (err) {
+      console.warn('[DocumentStore] deleteDocument local error:', err)
+    }
+
+    // 4. Supprimer le fichier local si présent (non bloquant).
+    if (localPath) {
+      try {
+        const fileSystem = useFileSystem()
+        if (typeof (fileSystem as any).deleteFile === 'function') {
+          await (fileSystem as any).deleteFile(localPath)
+        }
+      } catch {
+        // Non bloquant — nettoyage best-effort
+      }
+    }
+
+    // 5. Retirer de la mémoire réactive → disparaît du dashboard.
     documents.value = documents.value.filter((d) => d.id !== id)
     if (currentDocument.value?.id === id) currentDocument.value = null
   }
 
   /**
    * Upload via XMLHttpRequest pour exposer la progression (progress event).
-   * La validation MIME + taille est faite en amont dans UploadDropzone.
    */
   async function uploadDocument(workspaceId: string, file: File): Promise<void> {
     const authStore = useAuthStore()
@@ -155,9 +193,6 @@ export const useDocumentStore = defineStore('document', () => {
     uploadProgress.value = 0
     uploadError.value = null
 
-    // Lire le fichier comme ArrayBuffer AVANT d'ouvrir le XHR
-    // Cela garantit que le contenu est entièrement en mémoire dans la WebView
-    // avant que le picker n'ait rendu le contrôle à iOS (et mis l'app en bg)
     let fileBuffer: ArrayBuffer
     try {
       fileBuffer = await file.arrayBuffer()
@@ -167,7 +202,6 @@ export const useDocumentStore = defineStore('document', () => {
       throw new Error('File read error')
     }
 
-    // Reconstruire un Blob depuis l'ArrayBuffer pour le FormData
     const fileBlob = new Blob([fileBuffer], { type: file.type })
     const safeFile = new File([fileBlob], file.name, { type: file.type })
 
@@ -269,8 +303,11 @@ export const useDocumentStore = defineStore('document', () => {
       if (!fresh) return doc
       return fresh.updatedAt !== doc.updatedAt ? fresh : doc
     })
+    // N'ajouter que les nouveaux docs visibles — jamais réinjecter archivés/supprimés
     const existingIds = new Set(documents.value.map((d) => d.id))
-    const newDocs = freshList.filter((d) => !existingIds.has(d.id))
+    const newDocs = freshList.filter(
+      (d) => !existingIds.has(d.id) && d.processingStatus !== 'ARCHIVED'
+    )
     if (newDocs.length > 0) documents.value = [...newDocs, ...documents.value]
   }
 
@@ -327,9 +364,12 @@ export const useDocumentStore = defineStore('document', () => {
       const localDocs = await localRepo.getAllDocuments(workspaceId, _lastFilters)
 
       if (localDocs && localDocs.length > 0) {
-        _patchDocuments(localDocs)
+        // Exclure les archivés et supprimés — même comportement que le backend
+        const visibleDocs = localDocs.filter(
+          (d) => d.processingStatus !== 'ARCHIVED'
+        )
+        _patchDocuments(visibleDocs)
 
-        // Rafraîchir la recherche locale si une query est active
         if (localSearchStore.query) {
           await localSearchStore.searchOffline(workspaceId, localSearchStore.query)
         }

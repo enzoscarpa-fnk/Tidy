@@ -1,12 +1,13 @@
 <script setup lang="ts">
 const authStore = useAuthStore()
 const router = useRouter()
+const { request } = useTidyApi()
 
 const isLoggingOut = ref(false)
 
-// ── Stats documents (depuis SQLite local) ──────────────────────────────────
-const readyCount     = ref(0)
-const archivedCount  = ref(0)
+// ── Stats documents (depuis PostgreSQL via API — source de vérité) ─────────
+const docCount      = ref(0)
+const archivedCount = ref(0)
 const isLoadingStats = ref(true)
 
 // ── Stockage ───────────────────────────────────────────────────────────────
@@ -28,34 +29,29 @@ const tierBadgeClass = computed(() =>
 
 const isFree = computed(() => authStore.userTier !== 'pro')
 
-const totalCount = computed(() => readyCount.value + archivedCount.value)
+// Total = documents + archivés
+const totalCount = computed(() => docCount.value + archivedCount.value)
 
 // ── Calcul des segments de la barre ───────────────────────────────────────
-
-const readyPercent = computed(() => {
+const docPercent = computed(() => {
   if (isFree.value) {
-    return Math.min((readyCount.value / FREE_TIER_LIMIT) * 100, 100)
+    // Free : segment vert = docs hors archivés, proportionnel à la limite de 30
+    return Math.min((docCount.value / FREE_TIER_LIMIT) * 100, 100)
   }
-  // Pro : barre toujours pleine — répartition proportionnelle entre statuts
-  if (totalCount.value === 0) return 50 // visuellement centré si vide
-  return (readyCount.value / totalCount.value) * 100
+  if (totalCount.value === 0) return 50
+  return (docCount.value / totalCount.value) * 100
 })
 
 const archivedPercent = computed(() => {
   if (isFree.value) {
-    const used = Math.min(((readyCount.value + archivedCount.value) / FREE_TIER_LIMIT) * 100, 100)
-    return Math.max(used - readyPercent.value, 0)
+    // Free : segment gris = archivés, s'ajoute aux docs dans la limite de 30
+    return Math.min((archivedCount.value / FREE_TIER_LIMIT) * 100, 100)
   }
   if (totalCount.value === 0) return 50
   return (archivedCount.value / totalCount.value) * 100
 })
 
-// Segment vide : uniquement pour les utilisateurs free
-const emptyPercent = computed(() =>
-  isFree.value ? Math.max(100 - readyPercent.value - archivedPercent.value, 0) : 0
-)
-
-// ── Formatage octets → unité lisible ──────────────────────────────────────
+// ── Formatage octets ───────────────────────────────────────────────────────
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 o'
   if (bytes < 1_024) return `${bytes} o`
@@ -64,16 +60,29 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1_024 / 1_024 / 1_024).toFixed(2)} Go`
 }
 
-// ── Chargement ─────────────────────────────────────────────────────────────
+// ── Chargement stats depuis l'API backend (PostgreSQL) ────────────────────
+// On fait deux requêtes :
+//   1. Total tous statuts confondus (isDeleted=false) → via /me/stats
+//   2. Total ARCHIVED uniquement → déduit du même endpoint enrichi
+// L'endpoint /me/stats retourne cloudStorageBytes + on l'enrichit des counts.
 
 async function loadStats(): Promise<void> {
   isLoadingStats.value = true
   try {
-    const db = useDatabaseService()
-    // Lecture directe depuis SQLite — pas de dépendance au workspaceId
-    const counts = await db.getDocumentCountByStatus()
-    readyCount.value    = (counts['READY'] ?? 0) + (counts['ENRICHED'] ?? 0) + (counts['CLASSIFIED_ONLY'] ?? 0)
-    archivedCount.value = counts['ARCHIVED'] ?? 0
+    const res = await request<{
+      data: {
+        cloudStorageBytes: number
+        totalCount: number
+        archivedCount: number
+      }
+    }>('/me/stats')
+
+    if (res?.data) {
+      archivedCount.value = res.data.archivedCount ?? 0
+      // docCount = tous les documents sauf archivés
+      const total = res.data.totalCount ?? 0
+      docCount.value = Math.max(0, total - archivedCount.value)
+    }
   } catch {
     // Non bloquant
   } finally {
@@ -84,17 +93,13 @@ async function loadStats(): Promise<void> {
 async function loadStorageStats(): Promise<void> {
   isLoadingStorage.value = true
   try {
+    // Stockage local depuis SQLite
     const db = useDatabaseService()
     localStorageBytes.value = await db.getTotalLocalStorageBytes()
 
-    // Stockage cloud : tentative best-effort, reste à 0 si l'endpoint n'existe pas
-    try {
-      const { request } = useTidyApi()
-      const statsRes = await request<{ data: { cloudStorageBytes: number } }>('/me/stats')
-      cloudStorageBytes.value = statsRes?.data?.cloudStorageBytes ?? 0
-    } catch {
-      cloudStorageBytes.value = 0
-    }
+    // Stockage cloud depuis /me/stats (même appel que loadStats, mutualisé)
+    const res = await request<{ data: { cloudStorageBytes: number } }>('/me/stats')
+    cloudStorageBytes.value = res?.data?.cloudStorageBytes ?? 0
   } catch {
     localStorageBytes.value = 0
     cloudStorageBytes.value = 0
@@ -190,7 +195,7 @@ onMounted(() => {
                 {{ totalCount }} / {{ FREE_TIER_LIMIT }} documents
               </template>
               <template v-else>
-                {{ totalCount }} document{{ totalCount !== 1 ? 's' : '' }}
+                {{ docCount }} document{{ docCount !== 1 ? 's' : '' }}, {{ archivedCount }} archivé{{ archivedCount !== 1 ? 's' : '' }}
               </template>
             </p>
           </div>
@@ -200,27 +205,27 @@ onMounted(() => {
             class="h-3 w-full rounded-full overflow-hidden flex"
             style="background-color: #1c1c1e;"
             role="img"
-            :aria-label="`${readyCount} documents prêts, ${archivedCount} archivés`"
+            :aria-label="`${docCount} documents, ${archivedCount} archivés`"
           >
-            <!-- READY : vert iOS -->
+            <!-- Documents : vert iOS -->
             <div
-              v-if="readyPercent > 0"
+              v-if="docPercent > 0"
               class="h-full transition-all duration-700 ease-out"
-              :style="{ width: `${readyPercent}%`, backgroundColor: '#34c759' }"
+              :style="{ width: `${docPercent}%`, backgroundColor: '#34c759' }"
             />
-            <!-- Séparateur 1px entre segments -->
+            <!-- Séparateur -->
             <div
-              v-if="readyPercent > 0 && archivedPercent > 0"
+              v-if="docPercent > 0 && archivedPercent > 0"
               class="h-full w-px flex-shrink-0"
               style="background-color: rgba(255,255,255,0.25)"
             />
-            <!-- ARCHIVED : gris iOS -->
+            <!-- Archivés : gris iOS -->
             <div
               v-if="archivedPercent > 0"
               class="h-full transition-all duration-700 ease-out"
               :style="{ width: `${archivedPercent}%`, backgroundColor: '#8e8e93' }"
             />
-            <!-- Pro sans documents : remplissage neutre -->
+            <!-- Pro sans documents -->
             <div
               v-if="!isFree && totalCount === 0"
               class="h-full flex-1"
@@ -234,7 +239,6 @@ onMounted(() => {
               <div class="animate-pulse h-3 w-28 rounded bg-tidy-surface" />
             </template>
             <template v-else>
-              <!-- Local -->
               <span class="flex items-center gap-1 text-xs text-tidy-text-muted">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -242,7 +246,6 @@ onMounted(() => {
                 {{ formatBytes(localStorageBytes) }}
               </span>
               <span class="text-tidy-border text-xs" aria-hidden="true">·</span>
-              <!-- Cloud -->
               <span class="flex items-center gap-1 text-xs text-tidy-text-muted">
                 <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
@@ -257,7 +260,7 @@ onMounted(() => {
             <div class="flex items-center gap-1.5">
               <span class="block h-2.5 w-2.5 rounded-full flex-shrink-0" style="background-color: #34c759" aria-hidden="true" />
               <span class="text-xs text-tidy-text-secondary">
-                {{ readyCount }} prêt{{ readyCount !== 1 ? 's' : '' }}
+                {{ docCount }} document{{ docCount !== 1 ? 's' : '' }}
               </span>
             </div>
             <div class="flex items-center gap-1.5">
@@ -296,22 +299,10 @@ onMounted(() => {
           :disabled="isLoggingOut"
           @click="handleLogout"
         >
-          <svg
-            v-if="!isLoggingOut"
-            class="w-5 h-5 text-red-500 flex-shrink-0"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
+          <svg v-if="!isLoggingOut" class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
-          <svg
-            v-else
-            class="w-5 h-5 text-red-400 flex-shrink-0 animate-spin"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
+          <svg v-else class="w-5 h-5 text-red-400 flex-shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>

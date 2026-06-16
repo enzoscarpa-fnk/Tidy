@@ -145,7 +145,6 @@ function toListDto(doc: Document) {
 function toSyncDto(doc: Document) {
   return {
     ...toListDto(doc),
-    // Champs LWW spécifiques au sync — userTags aussi à plat pour compatibilité client SQLite
     userTags:             [...doc.metadata.userTags],
     isDeleted:            doc.isDeleted,
     notes:                doc.metadata.notes,
@@ -164,10 +163,6 @@ function toSyncDto(doc: Document) {
   };
 }
 
-/**
- * DTO pour un résultat de recherche FTS.
- * Étend `toListDto` avec `headline` (extrait surligné) et `rank` (score pertinence).
- */
 function toSearchResultDto(item: { document: Document; headline: string; rank: number }) {
   return {
     ...toListDto(item.document),
@@ -192,7 +187,7 @@ function toDetailDto(
 ) {
   return {
     ...toListDto(doc),
-    uploadedBy:         doc.uploadedById,
+    uploadedBy:           doc.uploadedById,
     pageCount:            doc.pageCount,
     s3Key:                doc.s3Key,
     extractedText:        doc.extractedText,
@@ -306,8 +301,6 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
       const s3Key      = `documents/${workspaceId}/${documentId}.${ext}`;
       const now        = new Date();
 
-      // await s3.putObject(s3Key, fileBuffer, mimeType);
-
       request.log.info({
         workspaceId,
         originalFilename,
@@ -326,7 +319,6 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
           mimeType,
           size: fileBuffer.length,
         }, 'S3 upload failed');
-
         throw error;
       }
 
@@ -436,9 +428,6 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
   );
 
   // ── GET /search — recherche full-text PostgreSQL ──────────────────────────
-  //
-  // ⚠ Cette route DOIT être déclarée AVANT `GET /:id` pour que Fastify ne
-  //   traite pas le segment "search" comme un paramètre :id.
 
   fastify.get<{ Querystring: SearchQuery }>(
     '/search',
@@ -449,7 +438,6 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const { workspaceId, q, detectedType, userTags, page, limit } = request.query;
 
-      // Vérification ownership du workspace
       await workspaceService.findById(workspaceId, request.user.sub);
 
       const trimmedQuery = q?.trim() ?? '';
@@ -644,7 +632,9 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
-  // ── DELETE /:id — soft delete ─────────────────────────────────────────────
+  // ── DELETE /:id ───────────────────────────────────────────────────────────
+  // Supprime le fichier S3 + la thumbnail, puis soft-delete PostgreSQL.
+  // Le soft-delete (isDeleted=true) est propagé au mobile via le pull sync LWW.
 
   fastify.delete<{ Params: IdParam }>(
     '/:id',
@@ -653,11 +643,32 @@ const documentRoutes: FastifyPluginAsync = async (fastify) => {
       preHandler: authenticate,
     },
     async (request, reply) => {
-      await resolveDocument(
+      const doc = await resolveDocument(
         documentRepo, workspaceService, request.params.id, request.user.sub,
       );
 
-      await documentRepo.softDelete(request.params.id);
+      // 1. Supprimer le fichier depuis S3/MinIO (best-effort)
+      if (doc.s3Key) {
+        try {
+          await s3.deleteObject(doc.s3Key);
+          request.log.info({ s3Key: doc.s3Key }, 'S3 object deleted');
+        } catch (err) {
+          request.log.warn({ err, s3Key: doc.s3Key }, 'S3 delete failed — continuing');
+        }
+      }
+
+      // 2. Supprimer la thumbnail si elle existe (best-effort)
+      if (doc.thumbnailRef) {
+        try {
+          await s3.deleteObject(doc.thumbnailRef);
+          request.log.info({ thumbnailRef: doc.thumbnailRef }, 'S3 thumbnail deleted');
+        } catch (err) {
+          request.log.warn({ err, thumbnailRef: doc.thumbnailRef }, 'S3 thumbnail delete failed — continuing');
+        }
+      }
+
+      // 3. Soft-delete PostgreSQL — le mobile récupérera isDeleted=true au prochain pull sync
+      await documentRepo.hardDelete(request.params.id);
 
       return reply.status(204).send();
     },

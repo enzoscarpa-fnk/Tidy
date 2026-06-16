@@ -90,26 +90,38 @@ const meRoutes: FastifyPluginAsync = async (fastify) => {
   });
 
   // ── GET /api/v1/me/stats ────────────────────────────────────────────────────
-  // Retourne la somme des fileSizeBytes de tous les documents non supprimés
-  // appartenant à l'utilisateur, tous workspaces confondus, la taille est stockée en base.
 
   fastify.get('/me/stats', {
     onRequest: [authenticate],
     handler: async (request, reply) => {
-      const result = await fastify.prisma.document.aggregate({
-        where: {
-          uploadedById: request.user.sub,
-          isDeleted:    false,
-        },
-        _sum: {
-          fileSizeBytes: true,
-        },
-      });
+      const userId = request.user.sub;
 
-      const cloudStorageBytes = Number(result._sum.fileSizeBytes ?? 0);
+      const [sizeResult, totalResult, archivedResult] = await Promise.all([
+        // Somme des tailles de fichiers (tous docs non supprimés)
+        fastify.prisma.document.aggregate({
+          where: { uploadedById: userId, isDeleted: false },
+          _sum:  { fileSizeBytes: true },
+        }),
+        // Nombre total de documents non supprimés
+        fastify.prisma.document.count({
+          where: { uploadedById: userId, isDeleted: false },
+        }),
+        // Nombre de documents ARCHIVED uniquement
+        fastify.prisma.document.count({
+          where: {
+            uploadedById:     userId,
+            isDeleted:        false,
+            processingStatus: 'ARCHIVED',
+          },
+        }),
+      ]);
 
       return reply.status(200).send(
-        createSuccessResponse({ cloudStorageBytes }),
+        createSuccessResponse({
+          cloudStorageBytes: Number(sizeResult._sum.fileSizeBytes ?? 0),
+          totalCount:        totalResult,
+          archivedCount:     archivedResult,
+        }),
       );
     },
   });

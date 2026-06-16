@@ -18,7 +18,7 @@ interface MistralOcrResponse {
 // ── Constantes ────────────────────────────────────────────────────────────────
 
 const MISTRAL_OCR_URL  = 'https://api.mistral.ai/v1/ocr';
-const OCR_TIMEOUT_MS   = 15_000;
+const OCR_TIMEOUT_MS   = 60_000;
 const MAX_ATTEMPTS     = 3;
 // Statuts HTTP non-retryables : erreur côté client, pas transitoire
 const NON_RETRYABLE_STATUS = new Set([400, 401, 403, 404]);
@@ -36,16 +36,11 @@ function backoffMs(attempt: number): number {
 
 // Corps du champ `document` selon le mime type
 function buildMistralDocument(base64: string, mimeType: string) {
-  if (mimeType === 'application/pdf') {
-    return {
-      type:         'document_url',
-      document_url: `application/pdf;base64,${base64}`,
-    };
-  }
-  // image/jpeg ou image/png
+  // L'API Mistral OCR utilise toujours document_url, que ce soit un PDF ou une image.
+  // Le type MIME est encodé dans la data URL : data:<mimeType>;base64,<data>
   return {
-    type:      'image_url',
-    image_url: `${mimeType};base64,${base64}`,
+    type:         'document_url',
+    document_url: `data:${mimeType};base64,${base64}`,
   };
 }
 
@@ -125,9 +120,10 @@ export class MistralOcrAdapter implements IOcrService {
         });
       } catch (fetchErr) {
         const isTimeout = (fetchErr as Error).name === 'AbortError';
+        console.error('[OCR] fetch error:', (fetchErr as Error).name, (fetchErr as Error).message);
         throw new OcrServiceUnavailableError(
           isTimeout
-            ? 'Mistral OCR : timeout dépassé (15 s).'
+            ? 'Mistral OCR : timeout dépassé.'
             : 'Mistral OCR : erreur réseau.',
         );
       }

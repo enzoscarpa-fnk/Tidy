@@ -81,14 +81,14 @@ describe('MistralOcrAdapter', () => {
       expect(result.confidence).toBeCloseTo(0.9);
     });
 
-    it('should use image_url type for JPEG mime type', async () => {
+    it('should use document_url type for JPEG mime type', async () => {
       mockSuccess(makeMistralResponse([{ markdown: 'image content', confidence: 0.92 }]));
 
       await adapter.processDocument(BASE64, IMG_MIME);
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
-      expect(body.document.type).toBe('image_url');
-      expect(body.document.image_url).toContain('image/jpeg;base64,');
+      expect(body.document.type).toBe('document_url');
+      expect(body.document.document_url).toContain('image/jpeg;base64,');
     });
 
     it('should use document_url type for PDF mime type', async () => {

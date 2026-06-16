@@ -51,6 +51,9 @@ async function onFileSelected(event: Event): Promise<void> {
   }
 
   await documentStore.uploadDocument(workspaceId.value, file)
+
+  await documentStore.fetchDocuments(workspaceId.value)
+  documentStore.startPolling(workspaceId.value)
 }
 
 // ── Recherche ──────────────────────────────────────────────────────────────

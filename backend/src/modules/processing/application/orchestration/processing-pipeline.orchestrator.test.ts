@@ -5,6 +5,14 @@ import { DocumentReadyEvent }              from '../../../document/domain/events
 import { DocumentIntelligence }            from '../../../document/domain/document-intelligence.value-object';
 import type { PipelineDeps }               from './processing-pipeline.orchestrator';
 
+vi.mock('sharp', () => ({
+  default: vi.fn(() => ({
+    resize:   vi.fn().mockReturnThis(),
+    jpeg:     vi.fn().mockReturnThis(),
+    toBuffer: vi.fn().mockResolvedValue(Buffer.from('fake-pdf-content')),
+  })),
+}));
+
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const DOC_ID   = 'doc-uuid-1';
@@ -33,7 +41,11 @@ function makeDeps(overrides: Partial<PipelineDeps> = {}): PipelineDeps {
       findAllByWorkspace: vi.fn(),
       update:             vi.fn().mockResolvedValue(undefined),
       softDelete:         vi.fn(),
+      hardDelete:         vi.fn(),
       updateStatus:       vi.fn().mockResolvedValue(undefined),
+      syncUpsert:         vi.fn(),
+      findSince:          vi.fn(),
+      search:             vi.fn(),
     },
     processingEventRepo: {
       create: vi.fn().mockResolvedValue(undefined),
@@ -152,6 +164,10 @@ describe('ProcessingPipelineOrchestrator', () => {
     await orchestrator.run(makeEvent(MIME_PDF));
 
     expect(deps.ocrService.processDocument).toHaveBeenCalledOnce();
+    expect(deps.ocrService.processDocument).toHaveBeenCalledWith(
+      expect.any(String),
+      'image/jpeg',
+    );
     expect(deps.documentRepository.update).toHaveBeenCalledWith(
       DOC_ID,
       expect.objectContaining({ textExtractionMethod: 'OCR', pageCount: 2 }),
@@ -162,9 +178,10 @@ describe('ProcessingPipelineOrchestrator', () => {
     await orchestrator.run(makeEvent(MIME_IMG));
 
     expect(deps.textExtractorService.extractFromPdf).not.toHaveBeenCalled();
+    expect(deps.ocrService.processDocument).toHaveBeenCalledOnce();
     expect(deps.ocrService.processDocument).toHaveBeenCalledWith(
-      FILE_BUFFER.toString('base64'),
-      MIME_IMG,
+      expect.any(String),
+      'image/jpeg',
     );
     expect(deps.documentRepository.update).toHaveBeenCalledWith(
       DOC_ID,
