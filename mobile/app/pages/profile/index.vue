@@ -1,108 +1,79 @@
 <script setup lang="ts">
-const authStore = useAuthStore()
-const router = useRouter()
+const authStore   = useAuthStore()
+const router      = useRouter()
 const { request } = useTidyApi()
 
-const isLoggingOut = ref(false)
-
-// ── Stats documents (depuis PostgreSQL via API — source de vérité) ─────────
-const docCount      = ref(0)
-const archivedCount = ref(0)
-const isLoadingStats = ref(true)
-
-// ── Stockage ───────────────────────────────────────────────────────────────
+const isLoggingOut      = ref(false)
+const docCount          = ref(0)
+const archivedCount     = ref(0)
+const isLoadingStats    = ref(true)
 const localStorageBytes = ref(0)
-const cloudStorageBytes = ref(0)
 const isLoadingStorage  = ref(true)
 
 const FREE_TIER_LIMIT = 30
-
-const tierLabel = computed(() =>
-  authStore.userTier === 'pro' ? 'Pro' : 'Gratuit'
-)
-
-const tierBadgeClass = computed(() =>
-  authStore.userTier === 'pro'
-    ? 'bg-tidy-primary/10 text-tidy-primary border border-tidy-primary/20'
-    : 'bg-tidy-surface text-tidy-text-muted border border-tidy-border'
-)
-
-const isFree = computed(() => authStore.userTier !== 'pro')
-
-// Total = documents + archivés
+const isPro      = computed(() => authStore.userTier === 'pro')
+const tierLabel  = computed(() => isPro.value ? 'Premium' : 'Gratuit')
 const totalCount = computed(() => docCount.value + archivedCount.value)
 
-// ── Calcul des segments de la barre ───────────────────────────────────────
 const docPercent = computed(() => {
-  if (isFree.value) {
-    // Free : segment vert = docs hors archivés, proportionnel à la limite de 30
-    return Math.min((docCount.value / FREE_TIER_LIMIT) * 100, 100)
-  }
+  if (!isPro.value) return Math.min((docCount.value / FREE_TIER_LIMIT) * 100, 100)
   if (totalCount.value === 0) return 50
   return (docCount.value / totalCount.value) * 100
 })
-
 const archivedPercent = computed(() => {
-  if (isFree.value) {
-    // Free : segment gris = archivés, s'ajoute aux docs dans la limite de 30
-    return Math.min((archivedCount.value / FREE_TIER_LIMIT) * 100, 100)
-  }
+  if (!isPro.value) return Math.min((archivedCount.value / FREE_TIER_LIMIT) * 100, 100)
   if (totalCount.value === 0) return 50
   return (archivedCount.value / totalCount.value) * 100
 })
 
-// ── Formatage octets ───────────────────────────────────────────────────────
+function pieArc(angleDeg: number): string {
+  if (angleDeg <= 0) return ''
+  if (angleDeg >= 360) return 'M 16 16 m -14 0 a 14 14 0 1 1 28 0 a 14 14 0 1 1 -28 0'
+  const rad = (angleDeg - 90) * (Math.PI / 180)
+  const x   = 16 + 14 * Math.cos(rad)
+  const y   = 16 + 14 * Math.sin(rad)
+  return `M 16 16 L 16 2 A 14 14 0 ${angleDeg > 180 ? 1 : 0} 1 ${x} ${y} Z`
+}
+const pieAngle = computed(() =>
+  totalCount.value === 0 ? 0 : (docCount.value / totalCount.value) * 360
+)
+
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 o'
-  if (bytes < 1_024) return `${bytes} o`
+  if (bytes < 1_024)          return `${bytes} o`
   if (bytes < 1_024 * 1_024) return `${(bytes / 1_024).toFixed(1)} Ko`
-  if (bytes < 1_024 * 1_024 * 1_024) return `${(bytes / 1_024 / 1_024).toFixed(1)} Mo`
-  return `${(bytes / 1_024 / 1_024 / 1_024).toFixed(2)} Go`
+  if (bytes < 1_024 ** 3)    return `${(bytes / 1_024 / 1_024).toFixed(1)} Mo`
+  return `${(bytes / 1_024 ** 3).toFixed(2)} Go`
 }
 
-// ── Chargement stats depuis l'API backend (PostgreSQL) ────────────────────
-// On fait deux requêtes :
-//   1. Total tous statuts confondus (isDeleted=false) → via /me/stats
-//   2. Total ARCHIVED uniquement → déduit du même endpoint enrichi
-// L'endpoint /me/stats retourne cloudStorageBytes + on l'enrichit des counts.
-
+// ── Stats cloud depuis l'API (PostgreSQL = source de vérité) ───────────────
 async function loadStats(): Promise<void> {
   isLoadingStats.value = true
   try {
     const res = await request<{
-      data: {
-        cloudStorageBytes: number
-        totalCount: number
-        archivedCount: number
-      }
+      data: { cloudStorageBytes: number; totalCount: number; archivedCount: number }
     }>('/me/stats')
-
     if (res?.data) {
       archivedCount.value = res.data.archivedCount ?? 0
-      // docCount = tous les documents sauf archivés
-      const total = res.data.totalCount ?? 0
-      docCount.value = Math.max(0, total - archivedCount.value)
+      docCount.value      = Math.max(0, (res.data.totalCount ?? 0) - archivedCount.value)
     }
-  } catch {
-    // Non bloquant
-  } finally {
-    isLoadingStats.value = false
-  }
+  } catch { /* non bloquant */ }
+  finally { isLoadingStats.value = false }
 }
 
+// ── Stockage local depuis SQLite ──────────────────────────────────────────
+// IMPORTANT : on utilise directement le composable useDatabaseService
+// qui expose getTotalLocalStorageBytes() lisant via _getDb().query()
+// (connexion ouverte), PAS via CapacitorSQLite.query() (API statique).
 async function loadStorageStats(): Promise<void> {
   isLoadingStorage.value = true
   try {
-    // Stockage local depuis SQLite
     const db = useDatabaseService()
-    localStorageBytes.value = await db.getTotalLocalStorageBytes()
-
-    // Stockage cloud depuis /me/stats (même appel que loadStats, mutualisé)
-    const res = await request<{ data: { cloudStorageBytes: number } }>('/me/stats')
-    cloudStorageBytes.value = res?.data?.cloudStorageBytes ?? 0
+    // getTotalLocalStorageBytes() : SUM(file_size_bytes) WHERE is_deleted = 0
+    const bytes = await db.getTotalLocalStorageBytes()
+    localStorageBytes.value = bytes ?? 0
   } catch {
     localStorageBytes.value = 0
-    cloudStorageBytes.value = 0
   } finally {
     isLoadingStorage.value = false
   }
@@ -110,208 +81,226 @@ async function loadStorageStats(): Promise<void> {
 
 async function handleLogout(): Promise<void> {
   isLoggingOut.value = true
-  try {
-    await authStore.logout()
-    await router.replace('/auth/login')
-  } finally {
-    isLoggingOut.value = false
-  }
+  try { await authStore.logout(); await router.replace('/auth/login') }
+  finally { isLoggingOut.value = false }
 }
 
-onMounted(() => {
-  loadStats()
-  loadStorageStats()
-})
+onMounted(() => { loadStats(); loadStorageStats() })
 </script>
 
 <template>
-  <div class="min-h-screen bg-tidy-surface">
+  <SwipeBack>
+    <div class="flex h-full flex-col overflow-hidden bg-tidy-surface">
 
-    <!-- Header -->
-    <header class="flex items-center gap-3 px-4 pt-12 pb-4">
-      <button
-        class="flex items-center justify-center w-9 h-9 rounded-full hover:bg-tidy-border/50 transition-colors"
-        aria-label="Retour"
-        @click="router.back()"
-      >
-        <svg class="w-5 h-5 text-tidy-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <h1 class="text-lg font-semibold text-tidy-text-primary">Mon profil</h1>
-    </header>
+      <!-- Header -->
+      <header class="flex-shrink-0 flex items-center gap-3 px-4 pt-4 pb-2 border-b border-white/10"
+              style="background-color: rgba(13,13,20,0.96);">
+        <button class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 transition-colors"
+                aria-label="Retour" @click="router.back()">
+          <svg class="w-5 h-5 text-tidy-text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <h1 class="text-base font-semibold text-tidy-text-primary">Mon profil</h1>
+      </header>
 
-    <div class="px-4 space-y-4">
+      <div class="scroll-area flex-1 overflow-y-auto px-4 py-3 space-y-3">
 
-      <!-- Carte identité -->
-      <div class="bg-white rounded-2xl p-5 shadow-sm border border-tidy-border">
-        <div class="flex items-center gap-4">
-          <div class="flex-shrink-0 w-14 h-14 rounded-full bg-tidy-primary/10 flex items-center justify-center">
-            <span class="text-xl font-bold text-tidy-primary">
+        <!-- ── Bloc identité + utilisation fusionnés ─────────────────────── -->
+        <div class="neo-card-light p-4 space-y-4">
+
+          <!-- Identité -->
+          <div class="flex items-center gap-3">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-tidy-mauve/25 flex items-center justify-center">
+            <span class="text-lg font-bold text-tidy-mauve">
               {{ authStore.user?.displayName?.charAt(0)?.toUpperCase() ?? '?' }}
             </span>
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-base font-semibold text-tidy-text-primary truncate">
-              {{ authStore.user?.displayName ?? '—' }}
-            </p>
-            <p class="text-sm text-tidy-text-muted truncate">
-              {{ authStore.user?.email ?? '—' }}
-            </p>
-          </div>
-          <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', tierBadgeClass]">
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-tidy-text-primary truncate">
+                {{ authStore.user?.displayName ?? '—' }}
+              </p>
+              <p class="text-xs text-tidy-text-secondary truncate">
+                {{ authStore.user?.email ?? '—' }}
+              </p>
+            </div>
+            <span class="text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0"
+                  :class="isPro
+              ? 'bg-tidy-orange/20 text-tidy-orange'
+              : 'bg-tidy-mauve/20 text-tidy-mauve'">
             {{ tierLabel }}
           </span>
+          </div>
+
+          <!-- Séparateur -->
+          <div class="h-px bg-white/[0.06]" aria-hidden="true" />
+
+          <!-- Utilisation -->
+          <template v-if="isLoadingStats || isLoadingStorage">
+            <div class="animate-pulse space-y-2">
+              <div class="h-3 w-24 rounded-full bg-white/8" />
+              <div class="h-3 rounded-full bg-white/8" />
+            </div>
+          </template>
+          <template v-else>
+            <div>
+              <!-- Titre même style que les labels de section -->
+              <div class="flex items-center justify-between mb-2">
+                <p class="text-xs font-semibold uppercase tracking-wider text-tidy-text-secondary">
+                  Utilisation
+                </p>
+                <p class="text-xs text-tidy-text-secondary">
+                  <template v-if="!isPro">{{ totalCount }} / {{ FREE_TIER_LIMIT }} docs</template>
+                  <template v-else>{{ docCount }} docs, {{ archivedCount }} archivés</template>
+                </p>
+              </div>
+
+              <!--
+                Barre neomorphism :
+                padding p-1 (4px) pour un espace visible autour de la barre de remplissage
+              -->
+              <div class="neo-bar-track rounded-full p-1 mb-3"
+                   role="img" :aria-label="`${docCount} documents, ${archivedCount} archivés`">
+                <div class="h-2 w-full rounded-full overflow-hidden flex">
+                  <!-- Segment docs — orange, coin droit carré si archivés présents -->
+                  <div
+                    v-if="docPercent > 0"
+                    class="neo-bar-fill h-full transition-all duration-700 ease-out"
+                    :style="{
+                    width: `${docPercent}%`,
+                    backgroundColor: '#F97316',
+                    borderRadius: archivedPercent > 0 ? '9999px 0 0 9999px' : '9999px',
+                  }"
+                  />
+                  <!-- Segment archivés — gris, coin gauche carré -->
+                  <div
+                    v-if="archivedPercent > 0"
+                    class="neo-bar-fill h-full transition-all duration-700 ease-out"
+                    :style="{
+                    width: `${archivedPercent}%`,
+                    backgroundColor: '#b0b0b8',
+                    borderRadius: '0 9999px 9999px 0',
+                  }"
+                  />
+                  <div v-if="isPro && totalCount === 0" class="h-full flex-1 rounded-full" style="background-color: #1a1a2e" />
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="flex items-center gap-1.5">
+                  <span class="neo-dot-track flex items-center justify-center h-4 w-4 rounded-full flex-shrink-0">
+                    <span class="neo-dot block h-2 w-2 rounded-full" style="background-color: #F97316" />
+                  </span>
+                    <span class="text-xs text-tidy-text-secondary">
+                    {{ docCount }} doc{{ docCount !== 1 ? 's' : '' }}
+                  </span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                  <span class="neo-dot-track flex items-center justify-center h-4 w-4 rounded-full flex-shrink-0">
+                    <span class="neo-dot block h-2 w-2 rounded-full" style="background-color: #b0b0b8" />
+                  </span>
+                    <span class="text-xs text-tidy-text-secondary">
+                    {{ archivedCount }} archivé{{ archivedCount !== 1 ? 's' : '' }}
+                  </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <!-- Icône stockage — 3 disques durs empilés, style fill orange -->
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"
+                       aria-hidden="true" class="flex-shrink-0 text-tidy-orange">
+                    <path d="M4 20h16c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2m0-3h2v2H4zM2 6c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2m4 1H4V5h2zm-2 7h16c1.1 0 2-.9 2-2s-.9-2-2-2H4c-1.1 0-2 .9-2 2s.9 2 2 2m0-3h2v2H4z"/>
+                  </svg>
+                  <span class="text-xs text-tidy-text-secondary">
+                  {{ formatBytes(localStorageBytes) }}
+                </span>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
-      </div>
 
-      <!-- ── Carte utilisation ────────────────────────────────────────── -->
-      <div class="bg-white rounded-2xl px-5 py-4 shadow-sm border border-tidy-border">
+        <!-- ── Carte Compte — glass-panel, boutons style action-pill ─────── -->
+        <div class="glass-panel p-4 space-y-3">
+          <!-- Titre même style que "Utilisation" -->
+          <p class="px-1 pb-1 text-xs font-semibold uppercase tracking-wider text-tidy-text-secondary">
+            Compte
+          </p>
 
-        <!-- Skeleton -->
-        <template v-if="isLoadingStats">
-          <div class="animate-pulse space-y-3">
-            <div class="flex justify-between">
-              <div class="h-3 w-20 rounded bg-tidy-surface" />
-              <div class="h-3 w-24 rounded bg-tidy-surface" />
-            </div>
-            <div class="h-3 rounded-full bg-tidy-surface" />
-            <div class="h-3 w-32 rounded bg-tidy-surface mx-auto" />
-            <div class="flex justify-center gap-6">
-              <div class="h-3 w-16 rounded bg-tidy-surface" />
-              <div class="h-3 w-16 rounded bg-tidy-surface" />
-            </div>
-          </div>
-        </template>
-
-        <template v-else>
-          <!-- En-tête -->
-          <div class="flex items-center justify-between mb-3">
-            <p class="text-xs font-semibold uppercase tracking-wider text-tidy-text-muted">
-              Utilisation
-            </p>
-            <p class="text-xs text-tidy-text-muted">
-              <template v-if="isFree">
-                {{ totalCount }} / {{ FREE_TIER_LIMIT }} documents
-              </template>
-              <template v-else>
-                {{ docCount }} document{{ docCount !== 1 ? 's' : '' }}, {{ archivedCount }} archivé{{ archivedCount !== 1 ? 's' : '' }}
-              </template>
-            </p>
-          </div>
-
-          <!-- Barre style iPhone -->
-          <div
-            class="h-3 w-full rounded-full overflow-hidden flex"
-            style="background-color: #1c1c1e;"
-            role="img"
-            :aria-label="`${docCount} documents, ${archivedCount} archivés`"
+          <!-- Modifier le profil — style action-pill (comme document details) -->
+          <button
+            class="action-pill w-full justify-between py-3.5"
+            @click="router.push('/profile/edit')"
           >
-            <!-- Documents : vert iOS -->
-            <div
-              v-if="docPercent > 0"
-              class="h-full transition-all duration-700 ease-out"
-              :style="{ width: `${docPercent}%`, backgroundColor: '#34c759' }"
-            />
-            <!-- Séparateur -->
-            <div
-              v-if="docPercent > 0 && archivedPercent > 0"
-              class="h-full w-px flex-shrink-0"
-              style="background-color: rgba(255,255,255,0.25)"
-            />
-            <!-- Archivés : gris iOS -->
-            <div
-              v-if="archivedPercent > 0"
-              class="h-full transition-all duration-700 ease-out"
-              :style="{ width: `${archivedPercent}%`, backgroundColor: '#8e8e93' }"
-            />
-            <!-- Pro sans documents -->
-            <div
-              v-if="!isFree && totalCount === 0"
-              class="h-full flex-1"
-              style="background-color: #3a3a3c"
-            />
-          </div>
-
-          <!-- Stockage local + cloud -->
-          <div class="flex items-center justify-center gap-4 mt-3">
-            <template v-if="isLoadingStorage">
-              <div class="animate-pulse h-3 w-28 rounded bg-tidy-surface" />
-            </template>
-            <template v-else>
-              <span class="flex items-center gap-1 text-xs text-tidy-text-muted">
-                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                </svg>
-                {{ formatBytes(localStorageBytes) }}
-              </span>
-              <span class="text-tidy-border text-xs" aria-hidden="true">·</span>
-              <span class="flex items-center gap-1 text-xs text-tidy-text-muted">
-                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                </svg>
-                {{ formatBytes(cloudStorageBytes) }}
-              </span>
-            </template>
-          </div>
-
-          <!-- Légende -->
-          <div class="flex items-center justify-center gap-5 mt-3">
-            <div class="flex items-center gap-1.5">
-              <span class="block h-2.5 w-2.5 rounded-full flex-shrink-0" style="background-color: #34c759" aria-hidden="true" />
-              <span class="text-xs text-tidy-text-secondary">
-                {{ docCount }} document{{ docCount !== 1 ? 's' : '' }}
-              </span>
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+              <span class="text-sm">Modifier le profil</span>
             </div>
-            <div class="flex items-center gap-1.5">
-              <span class="block h-2.5 w-2.5 rounded-full flex-shrink-0" style="background-color: #8e8e93" aria-hidden="true" />
-              <span class="text-xs text-tidy-text-secondary">
-                {{ archivedCount }} archivé{{ archivedCount !== 1 ? 's' : '' }}
-              </span>
-            </div>
-          </div>
-        </template>
-      </div>
+            <svg class="w-4 h-4 text-tidy-text-tertiary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
 
-      <!-- Section compte -->
-      <div class="bg-white rounded-2xl shadow-sm border border-tidy-border overflow-hidden">
-        <div class="px-5 py-3 border-b border-tidy-border">
-          <p class="text-xs font-semibold uppercase tracking-wider text-tidy-text-muted">Compte</p>
+          <!-- Se déconnecter — style action-pill danger -->
+          <button
+            class="action-pill-danger w-full justify-between py-3.5 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isLoggingOut"
+            @click="handleLogout"
+          >
+            <div class="flex items-center gap-2">
+              <svg v-if="!isLoggingOut" class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <svg v-else class="w-4 h-4 flex-shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span class="text-sm font-medium">{{ isLoggingOut ? 'Déconnexion…' : 'Se déconnecter' }}</span>
+            </div>
+          </button>
         </div>
-        <button
-          class="w-full flex items-center gap-3 px-5 py-4 hover:bg-tidy-surface transition-colors text-left"
-          @click="router.push('/profile/edit')"
-        >
-          <svg class="w-5 h-5 text-tidy-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
-          <span class="text-sm text-tidy-text-primary">Modifier le profil</span>
-          <svg class="w-4 h-4 text-tidy-text-muted ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-      </div>
 
-      <!-- Section déconnexion -->
-      <div class="bg-white rounded-2xl shadow-sm border border-tidy-border overflow-hidden mb-8">
-        <button
-          class="w-full flex items-center gap-3 px-5 py-4 hover:bg-red-50 transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
-          :disabled="isLoggingOut"
-          @click="handleLogout"
-        >
-          <svg v-if="!isLoggingOut" class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <svg v-else class="w-5 h-5 text-red-400 flex-shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          <span class="text-sm font-medium text-red-500">
-            {{ isLoggingOut ? 'Déconnexion…' : 'Se déconnecter' }}
-          </span>
-        </button>
       </div>
-
     </div>
-  </div>
+  </SwipeBack>
 </template>
+
+<style scoped>
+/* Bloc identité+utilisation — neomorphism fond clair */
+.neo-card-light {
+  border-radius: 1.5rem;
+  background-color: #141424;
+  box-shadow:
+    inset 2px 2px 6px rgba(0, 0, 0, 0.55),
+    inset -1px -1px 4px rgba(255, 255, 255, 0.06);
+}
+
+/* Piste de barre creusée — p-1 donne l'espace autour de la barre */
+.neo-bar-track {
+  background-color: #08080f;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 0, 0, 0.85),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.04);
+}
+
+/* Segments en léger relief */
+.neo-bar-fill {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4), 0 0 5px rgba(255,255,255,0.06);
+  border-radius: 9999px;
+}
+
+/* Anneau creusé */
+.neo-dot-track {
+  background-color: #08080f;
+  box-shadow:
+    inset 1px 1px 3px rgba(0, 0, 0, 0.85),
+    inset -1px -1px 2px rgba(255, 255, 255, 0.04);
+}
+
+/* Point en relief */
+.neo-dot {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 4px rgba(255,255,255,0.1);
+}
+</style>

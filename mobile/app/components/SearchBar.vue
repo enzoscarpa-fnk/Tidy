@@ -1,34 +1,34 @@
 <script setup lang="ts">
 interface Props {
   initialQuery?: string
-  placeholder?: string
-  autofocus?: boolean
-  fullWidth?: boolean
+  placeholder?:  string
+  autofocus?:    boolean
+  fullWidth?:    boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   initialQuery: '',
-  placeholder: 'Rechercher un document, un montant, un fournisseur…',
-  autofocus: false,
-  fullWidth: false,
+  placeholder:  'Rechercher un document, un montant, un fournisseur…',
+  autofocus:    false,
+  fullWidth:    false,
 })
 
 const emit = defineEmits<{
-  search: [query: string]
-  clear: []
+  search:  [query: string]
+  clear:   []
+  focused: [active: boolean]
 }>()
 
 const inputValue = ref(props.initialQuery)
-const inputRef = ref<HTMLInputElement | null>(null)
+const inputRef   = ref<HTMLInputElement | null>(null)
+const isFocused  = ref(false)
 
 onMounted(() => {
-  if (props.autofocus) {
-    nextTick(() => inputRef.value?.focus())
-  }
+  if (props.autofocus) nextTick(() => inputRef.value?.focus())
 })
 
-// ── Règle critique : PAS de recherche live (UX Flow §6) ────────────────────
-// La recherche est déclenchée UNIQUEMENT à la soumission (Enter ou icône loupe).
+function handleFocus(): void  { isFocused.value = true;  emit('focused', true) }
+function handleBlur(): void   { isFocused.value = false; emit('focused', false) }
 
 function handleSubmit(): void {
   const trimmed = inputValue.value.trim()
@@ -43,10 +43,8 @@ function handleClear(): void {
 }
 
 function handleKeydown(event: KeyboardEvent): void {
-  if (event.key === 'Enter') {
-    event.preventDefault()
-    handleSubmit()
-  }
+  if (event.key === 'Enter')  { event.preventDefault(); handleSubmit() }
+  if (event.key === 'Escape') inputRef.value?.blur()
 }
 </script>
 
@@ -57,61 +55,49 @@ function handleKeydown(event: KeyboardEvent): void {
       v-model="inputValue"
       type="search"
       :placeholder="placeholder"
-      class="w-full text-tidy-text-primary placeholder:text-tidy-text-secondary text-sm
-             focus:outline-none focus:ring-2 focus:ring-tidy-primary/40 transition-shadow"
+      class="w-full text-sm pl-5 pr-20 py-3 rounded-full
+             transition-all duration-200 focus:outline-none"
       :class="[
-        fullWidth
-          ? 'pl-5 pr-20 py-3 rounded-full bg-white border border-tidy-border shadow-sm'
-          : 'pl-4 pr-20 py-3 rounded-xl bg-tidy-surface border border-tidy-border',
+        isFocused
+          ? 'border-tidy-mauve/60 ring-2 ring-tidy-mauve/20'
+          : 'border-white/20',
       ]"
+      style="
+        background-color: rgba(19,19,31,0.92);
+        border-width: 1px;
+        border-style: solid;
+        color: #F1F0FF;
+      "
+      :style="{
+        '--placeholder-color': '#8B8AA8',
+      }"
       autocomplete="off"
+      @focus="handleFocus"
+      @blur="handleBlur"
       @keydown="handleKeydown"
     />
 
     <div class="absolute right-2 flex items-center gap-0.5">
-      <!-- Bouton effacer — visible uniquement si texte présent -->
       <Transition name="fade">
         <button
           v-if="inputValue.length > 0"
           type="button"
           aria-label="Effacer la recherche"
-          class="p-1.5 rounded-lg text-tidy-text-secondary hover:text-tidy-text-primary
-                 hover:bg-tidy-border/50 transition-colors"
+          class="p-1.5 rounded-full text-tidy-text-secondary hover:text-tidy-text-primary hover:bg-white/10 transition-colors"
           @click="handleClear"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-4 h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 6 6 18M6 6l12 12" />
           </svg>
         </button>
       </Transition>
-
-      <!-- Bouton loupe — toujours visible -->
       <button
         type="button"
         aria-label="Lancer la recherche"
-        class="p-1.5 rounded-lg text-tidy-primary hover:text-tidy-primary/70
-               hover:bg-tidy-primary/10 transition-colors"
+        class="p-1.5 rounded-full text-tidy-mauve hover:text-tidy-mauve-light hover:bg-tidy-mauve/10 transition-colors"
         @click="handleSubmit"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-5 h-5"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.35-4.35" />
         </svg>
@@ -121,17 +107,9 @@ function handleKeydown(event: KeyboardEvent): void {
 </template>
 
 <style scoped>
-/* Masque la croix native des inputs type="search" */
-input[type='search']::-webkit-search-cancel-button {
-  display: none;
-}
+input[type='search']::-webkit-search-cancel-button { display: none; }
+input::placeholder { color: #8B8AA8; opacity: 1; }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
+.fade-enter-from, .fade-leave-to       { opacity: 0; }
 </style>

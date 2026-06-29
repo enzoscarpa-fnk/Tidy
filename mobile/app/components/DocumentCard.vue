@@ -2,7 +2,6 @@
 import type { DocumentListItem } from '~/types/api'
 import { DETECTED_TYPE_LABELS } from '~/types/api'
 
-// ── Props & Emits ──────────────────────────────────────────────────────────
 interface Props {
   document: DocumentListItem
 }
@@ -13,16 +12,12 @@ const emit = defineEmits<{
   click: [documentId: string]
 }>()
 
-// ── Computed ───────────────────────────────────────────────────────────────
-
-// Taille fichier lisible
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} o`
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} Ko`
   return `${(bytes / (1024 * 1024)).toFixed(1)} Mo`
 }
 
-// Tags utilisateur à afficher (max 3 pour ne pas surcharger la card)
 const visibleUserTags = computed(
   () => props.document.metadata?.userTags?.slice(0, 3) ?? []
 )
@@ -31,7 +26,6 @@ const extraTagCount = computed(
   () => (props.document.metadata?.userTags?.length ?? 0) - visibleUserTags.value.length
 )
 
-// Date formatée en FR
 const formattedDate = computed(() => {
   return new Intl.DateTimeFormat('fr-FR', {
     day: 'numeric',
@@ -40,7 +34,6 @@ const formattedDate = computed(() => {
   }).format(new Date(props.document.uploadedAt))
 })
 
-// Type détecté (override utilisateur prioritaire)
 const displayedType = computed(() => {
   return props.document.metadata?.userOverrideType
     ?? props.document.intelligence?.detectedType
@@ -50,7 +43,10 @@ const displayedType = computed(() => {
 
 <template>
   <article
-    class="card-base flex cursor-pointer items-start gap-3 p-4 transition-colors hover:bg-tidy-surface-overlay active:scale-[0.99]"
+    class="card-base flex cursor-pointer items-start gap-3 p-4
+           transition-all duration-200
+           hover:border-tidy-border-strong hover:bg-white/[0.06]
+           active:scale-[0.99]"
     :aria-label="`Document : ${document.title}`"
     role="button"
     tabindex="0"
@@ -81,12 +77,11 @@ const displayedType = computed(() => {
 
       <!-- Ligne 2 : type détecté + taille + date -->
       <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-        <!-- Type détecté (affiché si disponible) -->
         <span
           v-if="displayedType"
-          class="text-xs font-medium text-tidy-primary"
+          class="text-xs font-medium text-tidy-mauve"
         >
-          {{ displayedType ? DETECTED_TYPE_LABELS[displayedType] : '' }}
+          {{ DETECTED_TYPE_LABELS[displayedType] }}
         </span>
 
         <span
@@ -120,10 +115,9 @@ const displayedType = computed(() => {
           :label="tag"
           variant="user"
         />
-        <!-- Indicateur +N si trop de tags -->
         <span
           v-if="extraTagCount > 0"
-          class="inline-flex items-center rounded-full border border-tidy-border px-2 py-0.5 text-xs text-tidy-text-tertiary"
+          class="inline-flex items-center rounded-full border border-tidy-border-glass px-2 py-0.5 text-xs text-tidy-text-tertiary"
         >
           +{{ extraTagCount }}
         </span>
